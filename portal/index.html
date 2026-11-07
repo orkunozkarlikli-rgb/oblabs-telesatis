@@ -464,7 +464,7 @@
     }
 
     // LEAD DATA & OPTIMIZED STORAGE
-    const STORAGE_KEY = 'oblabs_leads_v5_fast';
+    const STORAGE_KEY = 'oblabs_leads_v6_clean';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -754,7 +754,7 @@
       document.getElementById('call-modal').classList.add('hidden');
     }
 
-    // TİKLİ & GERİ ALINABİLİR SEÇİM
+    // TİKLİ & GERİ ALINABİLİR SEÇİM (ANLIK CANLI TEPKİ)
     function toggleModalOutcome(targetStatus) {
       const lead = filteredList[modalIndex];
       if (!lead) return;
@@ -769,21 +769,23 @@
         lead.status = targetStatus;
       }
 
+      // Anlık görsel tepki ver
+      updateOutcomeTicks(lead.status);
+
       saveData();
       renderTable();
       updateKPIs();
-      updateOutcomeTicks(lead.status);
     }
 
     function updateOutcomeTicks(currentStatus) {
       document.getElementById('modal-current-status').textContent = `Durum: ${currentStatus}`;
 
       const config = [
-        { btnId: 'btn-out-teklif', tickId: 'tick-teklif', status: 'Teklif Verildi', border: 'border-indigo-500', bg: 'bg-indigo-600', text: 'text-white' },
-        { btnId: 'btn-out-randevu', tickId: 'tick-randevu', status: 'Randevu Alındı', border: 'border-cyan-500', bg: 'bg-cyan-600', text: 'text-white' },
-        { btnId: 'btn-out-cevapsiz', tickId: 'tick-cevapsiz', status: 'Cevapsız', border: 'border-amber-500', bg: 'bg-amber-600', text: 'text-white' },
-        { btnId: 'btn-out-istemiyor', tickId: 'tick-istemiyor', status: 'İstemiyor', border: 'border-rose-500', bg: 'bg-rose-600', text: 'text-white' },
-        { btnId: 'btn-out-satildi', tickId: 'tick-satildi', status: 'Satış Yapıldı', border: 'border-emerald-500', bg: 'bg-emerald-600', text: 'text-white' }
+        { btnId: 'btn-out-teklif', tickId: 'tick-teklif', status: 'Teklif Verildi', color: '#6366f1' },
+        { btnId: 'btn-out-randevu', tickId: 'tick-randevu', status: 'Randevu Alındı', color: '#06b6d4' },
+        { btnId: 'btn-out-cevapsiz', tickId: 'tick-cevapsiz', status: 'Cevapsız', color: '#f59e0b' },
+        { btnId: 'btn-out-istemiyor', tickId: 'tick-istemiyor', status: 'İstemiyor', color: '#f43f5e' },
+        { btnId: 'btn-out-satildi', tickId: 'tick-satildi', status: 'Satış Yapıldı', color: '#10b981' }
       ];
 
       config.forEach(item => {
@@ -792,11 +794,23 @@
         if (!btn || !tick) return;
 
         if (currentStatus === item.status) {
-          btn.className = `p-2.5 rounded-xl bg-slate-900 border-2 ${item.border} transition flex flex-col items-center justify-between gap-1.5 cursor-pointer shadow-lg`;
-          tick.className = `w-5 h-5 rounded-full ${item.bg} ${item.text} flex items-center justify-center text-[11px] font-bold shadow`;
+          btn.style.borderColor = item.color;
+          btn.style.borderWidth = '2px';
+          btn.style.backgroundColor = '#0f172a';
+          
+          tick.style.backgroundColor = item.color;
+          tick.style.borderColor = item.color;
+          tick.style.color = '#ffffff';
+          tick.textContent = '✓';
         } else {
-          btn.className = 'p-2.5 rounded-xl bg-slate-950 hover:bg-slate-900/60 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer';
-          tick.className = 'w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition';
+          btn.style.borderColor = '#1e293b';
+          btn.style.borderWidth = '1px';
+          btn.style.backgroundColor = '#020617';
+
+          tick.style.backgroundColor = 'transparent';
+          tick.style.borderColor = '#334155';
+          tick.style.color = 'transparent';
+          tick.textContent = '';
         }
       });
     }
