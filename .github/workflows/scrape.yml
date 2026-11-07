@@ -1,4 +1,4 @@
-name: Otomatik Lead Toplama & Canli D1 Sync (Turbo Matrix)
+name: Otomatik Lead Toplama & Canli D1 Sync (18x Turbo Matrix)
 
 on:
   schedule:
@@ -7,15 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  parallel-scrape:
+  parallel-scrape-18:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
-      # Tüm worker sunucuları aynı anda paralel çalışsın, biri hata verse de diğerleri durmasın
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 18
       matrix:
-        worker: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        worker: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 
     steps:
       - name: Kodu Çek
@@ -32,8 +31,8 @@ jobs:
       - name: Chromium / Chrome Kur
         run: cd scraper && npx puppeteer browsers install chrome
 
-      - name: Worker ${{ matrix.worker }} Canlı Scraping (Turbo D1 Akışı)
+      - name: Worker ${{ matrix.worker }} (Öncelikli Yüksek Gelirli Sektörler)
         run: |
           cd scraper
-          echo "🚀 Worker #${{ matrix.worker }} Bağımsız Sunucuda Başlatılıyor..."
+          echo "🚀 Worker #${{ matrix.worker }} 18x Turbo Sunucuda Başlatılıyor..."
           node worker_scrape.js --worker=${{ matrix.worker }}
