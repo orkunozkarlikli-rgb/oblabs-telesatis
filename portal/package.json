@@ -1,0 +1,8 @@
+{
+  "name": "oblabs-telesatis-portal",
+  "version": "1.0.0",
+  "description": "OB Labs Telesatış & Lead Yönetim Portalı (data.oblabs.com.tr)",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

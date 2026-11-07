@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "data-oblabs",
+  "compatibility_date": "2024-09-23",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./portal",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "data.oblabs.com.tr",
+      "custom_domain": true
+    }
+  ]
+}

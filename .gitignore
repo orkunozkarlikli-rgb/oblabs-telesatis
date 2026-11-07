@@ -1,0 +1,4 @@
+node_modules/
+.cache/
+scraper/node_modules/
+package-lock.json
