@@ -14,276 +14,435 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .status-btn.active {
+      box-shadow: 0 0 0 2px currentColor;
+    }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100">
+<body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 select-none">
 
-  <!-- TOP BAR -->
-  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 py-3 sm:px-6">
-    <div class="flex items-center justify-between gap-4 max-w-7xl mx-auto">
-      
-      <!-- Brand & Status -->
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <i data-lucide="phone-call" class="w-5 h-5 text-white"></i>
+  <!-- ================= AUTH GATE (GİRİŞ EKRANI) ================= -->
+  <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="text-center mb-6">
+        <div class="h-14 w-14 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20 mb-3">
+          <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
         </div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">OB Labs Telesatış</h1>
+        <p class="text-xs text-slate-400 mt-1">Lütfen kullanıcı bilgilerinizle oturum açın</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Kullanıcı Adı</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
+            <input type="text" id="login-username" required placeholder="Kullanıcı adınız..."
+                   class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Şifre</label>
+          <div class="relative">
+            <i data-lucide="key" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
+            <input type="password" id="login-password" required placeholder="••••••••"
+                   class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition">
+          </div>
+        </div>
+
+        <div id="login-error" class="hidden text-xs text-rose-400 font-medium bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-xl text-center">
+          Kullanıcı adı veya şifre hatalı!
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2">
+          <span>Giriş Yap</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ANA PORTAL ================= -->
+  <div id="app-container" class="hidden h-full flex flex-col">
+
+    <!-- TOP BAR -->
+    <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 py-3 sm:px-6">
+      <div class="flex items-center justify-between gap-4 max-w-7xl mx-auto">
+        
+        <!-- Brand & Status -->
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <i data-lucide="phone-call" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-lg tracking-tight text-white">OB Labs</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Telesatış Portalı</span>
+            </div>
+            <div class="text-xs text-slate-400 flex items-center gap-1.5">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Canlı D1 Bulut</span>
+              <span class="text-slate-600">&bull;</span>
+              <span id="header-total-count" class="text-slate-300 font-semibold">0 Firma Havuzda</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons & User Menu -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Live Sync Button -->
+          <button onclick="forceSyncLatestData()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Verileri Güncelle</span>
+          </button>
+
+          <!-- Excel Export -->
+          <button onclick="exportToExcel()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Excel İndir</span>
+          </button>
+
+          <!-- User Badge & Logout -->
+          <div class="h-8 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+          <div class="flex items-center gap-2 pl-1">
+            <span id="user-badge" class="hidden sm:inline text-xs font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
+              oblabs-admin
+            </span>
+            <button onclick="handleLogout()" title="Çıkış Yap" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
+
+      <!-- KPI / STATUS SUMMARY CARDS -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
+          <div id="stat-total" class="text-xl font-bold text-white mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Aranacaklar</div>
+          <div id="stat-pending" class="text-xl font-bold text-amber-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Teklif Verildi</div>
+          <div id="stat-proposal" class="text-xl font-bold text-indigo-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Satış Yapıldı 🎉</div>
+          <div id="stat-won" class="text-xl font-bold text-emerald-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Randevu Alındı</div>
+          <div id="stat-callback" class="text-xl font-bold text-cyan-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400 font-medium">Kapanış Oranı</div>
+          <div id="stat-rate" class="text-xl font-bold text-purple-400 mt-0.5">0%</div>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 flex-1">
+          <!-- Search -->
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="fil-search" oninput="applyFilters()" placeholder="Firma adı veya tel ara..."
+                   class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          </div>
+
+          <!-- City Filter -->
+          <select id="fil-city" onchange="handleCityFilterChange()"
+                  class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="ALL">Tüm Şehirler</option>
+          </select>
+
+          <!-- District Filter -->
+          <select id="fil-district" onchange="applyFilters()"
+                  class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="ALL">Tüm İlçeler</option>
+          </select>
+
+          <!-- Category Filter -->
+          <select id="fil-category" onchange="applyFilters()"
+                  class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="ALL">Tüm Sektörler</option>
+          </select>
+        </div>
+
+        <!-- Status Filter Tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 text-xs">
+          <button onclick="filterStatus('ALL')" class="status-tab px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold">Tümü</button>
+          <button onclick="filterStatus('Aranacak')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Aranacak</button>
+          <button onclick="filterStatus('Teklif Verildi')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Teklif</button>
+          <button onclick="filterStatus('Randevu Alındı')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Randevu</button>
+          <button onclick="filterStatus('Satış Yapıldı')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Satıldı</button>
+        </div>
+      </div>
+
+      <!-- LEADS TABLE VIEW -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col flex-1">
+        
+        <div class="overflow-x-auto flex-1">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4 font-semibold">Firma Adı & Bölge</th>
+                <th class="py-3 px-4 font-semibold">Sektör</th>
+                <th class="py-3 px-4 font-semibold">Yorum / Puan</th>
+                <th class="py-3 px-4 font-semibold">Telefon</th>
+                <th class="py-3 px-4 font-semibold">Durum</th>
+                <th class="py-3 px-4 font-semibold">Son Not</th>
+                <th class="py-3 px-4 font-semibold text-right">Aksiyon</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+              <!-- JS rendered rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div id="table-empty" class="hidden py-16 text-center text-slate-500">
+          <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+          <p class="text-sm font-medium">Bu filtrelere uygun firma bulunamadı.</p>
+        </div>
+
+        <!-- PAGINATION BAR -->
+        <div class="border-t border-slate-800 px-4 py-3 bg-slate-950/60 flex items-center justify-between gap-4">
+          <div class="text-xs text-slate-400">
+            <span id="pagination-info">0-0 / 0</span>
+          </div>
+
           <div class="flex items-center gap-2">
-            <span class="font-bold text-lg tracking-tight text-white">OB Labs</span>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Telesatış Portalı</span>
+            <button id="btn-prev-page" onclick="prevPage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition">
+              Önceki
+            </button>
+            <span id="page-num-badge" class="px-2.5 py-1 rounded-md bg-blue-600/20 text-blue-400 text-xs font-bold border border-blue-500/30">1</span>
+            <button id="btn-next-page" onclick="nextPage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition">
+              Sonraki
+            </button>
           </div>
-          <div class="text-xs text-slate-400 flex items-center gap-1.5">
-            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>data.oblabs.com.tr</span>
-            <span class="text-slate-600">&bull;</span>
-            <span id="header-total-count" class="text-slate-300 font-semibold">0 Firma Havuzda</span>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- ================= KOMPAKT ÇAĞRI MODALI ================= -->
+    <div id="call-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 sm:p-6 shadow-2xl relative flex flex-col gap-4">
+        
+        <!-- Header Actions -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span id="modal-queue-pos" class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Firma 1 / 100</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <a id="modal-maps-link" href="#" target="_blank" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 transition">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Google Harita</span>
+            </a>
+            <button onclick="closeCallModal()" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
           </div>
         </div>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Live Sync Button -->
-        <button onclick="forceSyncLatestData()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
-          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Verileri Güncelle</span>
-        </button>
-
-        <!-- Excel Export -->
-        <button onclick="exportToExcel()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Excel İndir</span>
-        </button>
-      </div>
-
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
-
-    <!-- KPI / STATUS SUMMARY CARDS -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
-        <div id="stat-total" class="text-xl font-bold text-white mt-0.5">0</div>
-      </div>
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Aranacaklar</div>
-        <div id="stat-pending" class="text-xl font-bold text-amber-400 mt-0.5">0</div>
-      </div>
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Teklif İstendi</div>
-        <div id="stat-proposal" class="text-xl font-bold text-indigo-400 mt-0.5">0</div>
-      </div>
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Satış Yapıldı 🎉</div>
-        <div id="stat-won" class="text-xl font-bold text-emerald-400 mt-0.5">0</div>
-      </div>
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Tekrar Aranacak</div>
-        <div id="stat-callback" class="text-xl font-bold text-cyan-400 mt-0.5">0</div>
-      </div>
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-        <div class="text-[11px] text-slate-400 font-medium">Kapanış Oranı</div>
-        <div id="stat-rate" class="text-xl font-bold text-purple-400 mt-0.5">0%</div>
-      </div>
-    </div>
-
-    <!-- FILTER BAR -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 flex-1">
-        <!-- Search -->
-        <div class="relative">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-          <input type="text" id="fil-search" oninput="applyFilters()" placeholder="Firma adı veya tel ara..."
-                 class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+        <!-- Business Header Info -->
+        <div>
+          <h2 id="modal-title" class="text-lg font-bold text-white tracking-tight leading-snug">
+            Firma Adı
+          </h2>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span id="modal-category" class="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">Sektör</span>
+            <span id="modal-location" class="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">İlçe</span>
+            <span id="modal-rating" class="px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">★ 5.0 (0 Yorum)</span>
+            <span class="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 text-xs font-bold border border-rose-500/20">Web Sitesi YOK</span>
+          </div>
+          <p id="modal-address" class="text-xs text-slate-400 mt-2 line-clamp-1">Adres</p>
         </div>
 
-        <!-- City -->
-        <select id="fil-city" onchange="handleCityFilterChange()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <option value="ALL">Tüm Şehirler</option>
-        </select>
-
-        <!-- District -->
-        <select id="fil-district" onchange="applyFilters()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <option value="ALL">Tüm İlçeler</option>
-        </select>
-
-        <!-- Category -->
-        <select id="fil-category" onchange="applyFilters()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <option value="ALL">Tüm Sektörler</option>
-        </select>
-      </div>
-
-      <!-- Result Count -->
-      <div class="text-xs text-slate-400 flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
-        <span id="badge-filtered-count" class="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">
-          0 Firma Listeleniyor
-        </span>
-      </div>
-    </div>
-
-    <!-- GENİŞ LİSTE TABLOSU (SAYFALAMALI) -->
-    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col">
-      <div class="overflow-x-auto flex-1">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-900/90 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider font-semibold">
-            <tr>
-              <th class="py-3 px-4">Firma Adı & Lokasyon</th>
-              <th class="py-3 px-4">Sektör</th>
-              <th class="py-3 px-4">Google Skoru</th>
-              <th class="py-3 px-4">Telefon</th>
-              <th class="py-3 px-4">Durum</th>
-              <th class="py-3 px-4">Görüşme Notu</th>
-              <th class="py-3 px-4 text-right">İşlem</th>
-            </tr>
-          </thead>
-          <tbody id="table-body" class="divide-y divide-slate-800/80 text-slate-200">
-            <!-- Dynamic Rows -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Empty State -->
-      <div id="table-empty" class="hidden py-16 text-center">
-        <div class="h-12 w-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400 mb-3">
-          <i data-lucide="inbox" class="w-6 h-6"></i>
+        <!-- BIG CALL BUTTON -->
+        <div>
+          <a id="modal-call-btn" href="tel:" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-900/30 transition">
+            <i data-lucide="phone-outgoing" class="w-5 h-5"></i>
+            <span id="modal-phone-text">05XX XXX XX XX</span>
+            <span class="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded ml-2">ŞİMDİ ARA</span>
+          </a>
         </div>
-        <p class="text-sm font-semibold text-white">Bu filtrede firma bulunamadı.</p>
-      </div>
 
-      <!-- PAGINATION CONTROLS (SAYFAYI YORMAYACAK ŞEKİLDE) -->
-      <div class="px-4 py-3 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <div id="pagination-info">
-          Sayfa 1 / 1
+        <!-- PROMPTER / PITCH -->
+        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 leading-relaxed">
+          <div class="font-bold text-blue-400 mb-1 flex items-center gap-1">
+            <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+            <span>Açılış Konuşması:</span>
+          </div>
+          <p id="modal-pitch-text">
+            "Merhaba, işletmenizi Google Haritalar'da inceledim..."
+          </p>
         </div>
-        <div class="flex items-center gap-1.5">
-          <button id="btn-prev-page" onclick="prevPage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
-            Önceki
+
+        <!-- OUTCOME BUTTONS (TİKLİ & GERİ ALINABİLİR SEÇİM) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <span>Görüşme Sonucu Seçin (Tekrar basınca iptal olur):</span>
+            <span id="modal-current-status" class="font-bold text-blue-400">Durum: Aranacak</span>
+          </div>
+          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="outcome-buttons-container">
+            <!-- Teklif Verildi -->
+            <button type="button" onclick="toggleModalOutcome('Teklif Verildi')" id="btn-out-teklif"
+                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
+              <span class="flex items-center gap-1">
+                <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
+                <span>Teklif</span>
+              </span>
+              <span class="check-icon hidden text-[10px] bg-indigo-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+            </button>
+
+            <!-- Randevu Alındı -->
+            <button type="button" onclick="toggleModalOutcome('Randevu Alındı')" id="btn-out-randevu"
+                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
+              <span class="flex items-center gap-1">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                <span>Randevu</span>
+              </span>
+              <span class="check-icon hidden text-[10px] bg-cyan-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+            </button>
+
+            <!-- Cevapsız -->
+            <button type="button" onclick="toggleModalOutcome('Cevapsız')" id="btn-out-cevapsiz"
+                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-amber-600/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
+              <span class="flex items-center gap-1">
+                <i data-lucide="phone-missed" class="w-3.5 h-3.5"></i>
+                <span>Cevapsız</span>
+              </span>
+              <span class="check-icon hidden text-[10px] bg-amber-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+            </button>
+
+            <!-- İstemiyor -->
+            <button type="button" onclick="toggleModalOutcome('İstemiyor')" id="btn-out-istemiyor"
+                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-rose-600/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
+              <span class="flex items-center gap-1">
+                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                <span>İstemiyor</span>
+              </span>
+              <span class="check-icon hidden text-[10px] bg-rose-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+            </button>
+
+            <!-- Satış Yapıldı -->
+            <button type="button" onclick="toggleModalOutcome('Satış Yapıldı')" id="btn-out-satildi"
+                    class="status-btn p-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-xs font-bold transition flex flex-col items-center gap-1">
+              <span class="flex items-center gap-1">
+                <i data-lucide="party-popper" class="w-3.5 h-3.5"></i>
+                <span>Satıldı!</span>
+              </span>
+              <span class="check-icon hidden text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+            </button>
+          </div>
+
+          <!-- Note Input -->
+          <input type="text" id="modal-note-input" onblur="saveModalNote(this.value)" placeholder="Görüşme notu ekleyin (Ahmet Bey teklif bekliyor vb.)..."
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition mt-2">
+        </div>
+
+        <!-- MODAL FOOTER NAVIGATION -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button onclick="modalPrev()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            <span>Önceki</span>
           </button>
-          <span id="page-num-badge" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold">1</span>
-          <button id="btn-next-page" onclick="nextPage()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
-            Sonraki
+
+          <button onclick="modalNext()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+            <span>Sonraki</span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
           </button>
         </div>
+
       </div>
     </div>
 
-  </main>
-
-  <!-- KOMPAKT ÇAĞRI MODALI (POPUP: TIKLANINCA AÇILAN HIZLI ÇAĞRI EKRANI) -->
-  <div id="call-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
-      
-      <!-- Close Button -->
-      <button onclick="closeCallModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between gap-3 mb-4 pr-8">
-        <span id="modal-queue-pos" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-          Firma 1 / 80
-        </span>
-        <a id="modal-maps-link" href="#" target="_blank" rel="noopener" class="text-xs text-blue-400 hover:underline flex items-center gap-1">
-          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-          <span>Google Harita</span>
-        </a>
-      </div>
-
-      <!-- Business Header Info -->
-      <div class="mb-4">
-        <h2 id="modal-title" class="text-xl font-bold text-white tracking-tight leading-snug">
-          Firma Adı
-        </h2>
-        <div class="flex flex-wrap items-center gap-2 mt-2">
-          <span id="modal-category" class="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">Sektör</span>
-          <span id="modal-location" class="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">İlçe</span>
-          <span id="modal-rating" class="px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">★ 5.0 (0 Yorum)</span>
-          <span class="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 text-xs font-bold border border-rose-500/20">Web Sitesi YOK</span>
-        </div>
-        <p id="modal-address" class="text-xs text-slate-400 mt-2 line-clamp-1">Adres</p>
-      </div>
-
-      <!-- BIG CALL BUTTON -->
-      <div class="mb-4">
-        <a id="modal-call-btn" href="tel:" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-900/30 transition">
-          <i data-lucide="phone-outgoing" class="w-5 h-5"></i>
-          <span id="modal-phone-text">05XX XXX XX XX</span>
-          <span class="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded ml-2">ŞİMDİ ARA</span>
-        </a>
-      </div>
-
-      <!-- PROMPTER / PITCH -->
-      <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 mb-4 text-xs text-slate-300 leading-relaxed">
-        <div class="font-bold text-blue-400 mb-1 flex items-center gap-1">
-          <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-          <span>Açılış Konuşması (Hazır Taslak):</span>
-        </div>
-        <p id="modal-pitch-text">
-          "Merhaba, işletmenizi Google Haritalar'da inceledim. Çok başarılı yorumlarınız var, tebrik ederim. Fakat dikkatimi çekti, resmi bir web siteniz ekli değil..."
-        </p>
-      </div>
-
-      <!-- OUTCOME BUTTONS -->
-      <div class="space-y-2 mb-4">
-        <div class="text-[11px] font-medium text-slate-400">Görüşme Sonucu Seçin:</div>
-        <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-          <button onclick="setModalOutcome('Teklif İstendi')" class="p-2 rounded-lg bg-slate-950 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition">
-            📩 Teklif
-          </button>
-          <button onclick="setModalOutcome('Tekrar Aranacak')" class="p-2 rounded-lg bg-slate-950 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition">
-            🔄 Randevu
-          </button>
-          <button onclick="setModalOutcome('Ulaşılamadı')" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs font-semibold transition">
-            📵 Cevapsız
-          </button>
-          <button onclick="setModalOutcome('İlgilenmiyor')" class="p-2 rounded-lg bg-slate-950 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-semibold transition">
-            ❌ İstemiyor
-          </button>
-          <button onclick="setModalOutcome('Satış Yapıldı')" class="p-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 text-xs font-bold transition">
-            🎉 Satıldı!
-          </button>
-        </div>
-
-        <!-- Note Input -->
-        <input type="text" id="modal-note-input" onblur="saveModalNote(this.value)" placeholder="Görüşme notu ekleyin (Ahmet Bey teklif bekliyor vb.)..."
-               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition mt-2">
-      </div>
-
-      <!-- MODAL FOOTER NAVIGATION -->
-      <div class="flex items-center justify-between pt-3 border-t border-slate-800">
-        <button onclick="modalPrev()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
-          <i data-lucide="chevron-left" class="w-4 h-4"></i>
-          <span>Önceki Firma</span>
-        </button>
-
-        <button onclick="modalNext()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
-          <span>Sonraki Firma</span>
-          <i data-lucide="chevron-right" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-    </div>
   </div>
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'oblabs_leads_v4_paged';
-    const PAGE_SIZE = 12; // Sayfayı yormayan ideal firma sayısı
+    // AUTHENTICATION
+    const AUTH_KEY = 'oblabs_tele_auth_user';
+    const VALID_USERS = {
+      'oblabs-admin': '4810218ORk'
+    };
+
+    function checkAuth() {
+      const savedUser = localStorage.getItem(AUTH_KEY);
+      if (savedUser && VALID_USERS[savedUser]) {
+        showApp(savedUser);
+      } else {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+
+      if (VALID_USERS[u] && VALID_USERS[u] === p) {
+        localStorage.setItem(AUTH_KEY, u);
+        document.getElementById('login-error').classList.add('hidden');
+        showApp(u);
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('Oturumu kapatmak istediğinize emin misiniz?')) {
+        localStorage.removeItem(AUTH_KEY);
+        location.reload();
+      }
+    }
+
+    function showApp(username) {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+      document.getElementById('user-badge').textContent = username;
+      init();
+    }
+
+    // LEAD DATA & OPTIMIZED STORAGE
+    const STORAGE_KEY = 'oblabs_leads_v5_fast';
+    const PAGE_SIZE = 12;
 
     let allLeads = [];
     let filteredList = [];
     let currentPage = 1;
     let modalIndex = 0;
+    let currentFilterStatus = 'ALL';
 
     async function init() {
+      // 1. Önce yerel hafızadan anında yükle (0 milisaniyede sayfa açılır!)
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        try { allLeads = JSON.parse(saved); } catch(e) { allLeads = []; }
+        try {
+          allLeads = JSON.parse(saved);
+          populateDropdowns();
+          applyFilters();
+        } catch(e) { allLeads = []; }
       }
 
+      // 2. Arka planda sunucudan en güncel veriyi sessizce çek (Donma yapmaz)
       await fetchServerData(false);
 
       populateDropdowns();
@@ -291,26 +450,15 @@
       lucide.createIcons();
     }
 
-    // Fetch server data from Cloudflare D1 API
     async function fetchServerData(manual = false) {
       try {
-        // Önce D1 Canlı Veritabanından çekmeyi dene
         const res = await fetch('/api/leads?t=' + Date.now());
         if (res.ok) {
           const remote = await res.json();
           if (Array.isArray(remote) && remote.length > 0) {
             mergeLeads(remote);
-            if (manual) alert(`Canlı veritabanından (D1) ${remote.length} adet güncel firma verisi başarıyla yüklendi!`);
+            if (manual) alert(`Canlı veritabanından ${remote.length} adet güncel firma verisi başarıyla yüklendi!`);
             return;
-          }
-        }
-        
-        // Yedek olarak statik JSON dene
-        const fallbackRes = await fetch('./leads_data.json?t=' + Date.now());
-        if (fallbackRes.ok) {
-          const remote = await fallbackRes.json();
-          if (Array.isArray(remote) && remote.length > 0) {
-            mergeLeads(remote);
           }
         }
       } catch (e) {
@@ -320,15 +468,17 @@
 
     function mergeLeads(newList) {
       let added = 0;
+      const phoneMap = new Map();
+      allLeads.forEach(l => {
+        const p = (l.phone || '').replace(/\D/g, '');
+        if (p) phoneMap.set(p, l);
+      });
+
       newList.forEach(item => {
         const cleanPhone = (item.phone || '').replace(/\D/g, '');
-        const exists = allLeads.some(l => 
-          (cleanPhone && (l.phone || '').replace(/\D/g, '') === cleanPhone) ||
-          (l.name.toLowerCase() === (item.name || '').toLowerCase())
-        );
-
-        if (!exists && item.name) {
+        if (cleanPhone && !phoneMap.has(cleanPhone)) {
           allLeads.push(item);
+          phoneMap.set(cleanPhone, item);
           added++;
         }
       });
@@ -341,8 +491,10 @@
     function populateDropdowns() {
       const cities = [...new Set(allLeads.map(l => l.city).filter(Boolean))].sort();
       const citySel = document.getElementById('fil-city');
+      const curCity = citySel.value || 'ALL';
       citySel.innerHTML = '<option value="ALL">Tüm Şehirler</option>';
       cities.forEach(c => citySel.innerHTML += `<option value="${c}">${c}</option>`);
+      citySel.value = curCity;
 
       handleCityFilterChange();
     }
@@ -353,14 +505,27 @@
 
       const districts = [...new Set(relevant.map(l => l.district).filter(Boolean))].sort();
       const distSel = document.getElementById('fil-district');
+      const curDist = distSel.value || 'ALL';
       distSel.innerHTML = '<option value="ALL">Tüm İlçeler</option>';
       districts.forEach(d => distSel.innerHTML += `<option value="${d}">${d}</option>`);
+      distSel.value = curDist;
 
       const categories = [...new Set(relevant.map(l => l.category).filter(Boolean))].sort();
       const catSel = document.getElementById('fil-category');
+      const curCat = catSel.value || 'ALL';
       catSel.innerHTML = '<option value="ALL">Tüm Sektörler</option>';
       categories.forEach(k => catSel.innerHTML += `<option value="${k}">${k}</option>`);
+      catSel.value = curCat;
 
+      applyFilters();
+    }
+
+    function filterStatus(st) {
+      currentFilterStatus = st;
+      document.querySelectorAll('.status-tab').forEach(b => {
+        b.className = 'status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium';
+      });
+      event.target.className = 'status-tab px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold';
       applyFilters();
     }
 
@@ -374,6 +539,10 @@
         if (city !== 'ALL' && item.city !== city) return false;
         if (district !== 'ALL' && item.district !== district) return false;
         if (category !== 'ALL' && item.category !== category) return false;
+        if (currentFilterStatus !== 'ALL') {
+          const itemSt = item.status || 'Aranacak';
+          if (itemSt !== currentFilterStatus) return false;
+        }
 
         if (q) {
           const mName = (item.name || '').toLowerCase().includes(q);
@@ -385,9 +554,33 @@
         return true;
       });
 
-      document.getElementById('badge-filtered-count').textContent = `${filteredList.length} Firma Listeleniyor`;
       currentPage = 1;
       renderTable();
+      updateKPIs();
+    }
+
+    function updateKPIs() {
+      const total = allLeads.length;
+      let pending = 0, proposal = 0, won = 0, callback = 0;
+
+      allLeads.forEach(l => {
+        const s = l.status || 'Aranacak';
+        if (s === 'Aranacak') pending++;
+        else if (s === 'Teklif Verildi') proposal++;
+        else if (s === 'Satış Yapıldı') won++;
+        else if (s === 'Randevu Alındı') callback++;
+      });
+
+      document.getElementById('stat-total').textContent = total.toLocaleString('tr-TR');
+      document.getElementById('stat-pending').textContent = pending.toLocaleString('tr-TR');
+      document.getElementById('stat-proposal').textContent = proposal.toLocaleString('tr-TR');
+      document.getElementById('stat-won').textContent = won.toLocaleString('tr-TR');
+      document.getElementById('stat-callback').textContent = callback.toLocaleString('tr-TR');
+
+      const contacted = total - pending;
+      const rate = contacted > 0 ? ((won / contacted) * 100).toFixed(1) : 0;
+      document.getElementById('stat-rate').textContent = `${rate}%`;
+      document.getElementById('header-total-count').textContent = `${total.toLocaleString('tr-TR')} Firma Havuzda`;
     }
 
     function renderTable() {
@@ -416,10 +609,11 @@
         const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
 
         let statusClass = 'bg-slate-800 text-slate-300 border-slate-700';
-        if (item.status === 'Teklif İstendi') statusClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
-        if (item.status === 'Tekrar Aranacak') statusClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+        if (item.status === 'Teklif Verildi') statusClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
+        if (item.status === 'Randevu Alındı') statusClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
         if (item.status === 'Satış Yapıldı') statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold';
-        if (item.status === 'İlgilenmiyor') statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+        if (item.status === 'İstemiyor') statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+        if (item.status === 'Cevapsız') statusClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
 
         return `
           <tr onclick="openCallModal(${absoluteIndex})" class="hover:bg-slate-800/50 cursor-pointer transition group">
@@ -463,7 +657,6 @@
         `;
       }).join('');
 
-      // Update Pagination Controls
       document.getElementById('pagination-info').textContent = `Toplam ${filteredList.length} firmadan ${startIndex + 1} - ${Math.min(startIndex + PAGE_SIZE, filteredList.length)} gösteriliyor`;
       document.getElementById('page-num-badge').textContent = currentPage;
       document.getElementById('btn-prev-page').disabled = currentPage <= 1;
@@ -489,7 +682,7 @@
       }
     }
 
-    // KOMPAKT ÇAĞRI MODALI
+    // MODAL İŞLEMLERİ
     function openCallModal(index) {
       modalIndex = index;
       const lead = filteredList[modalIndex];
@@ -508,9 +701,11 @@
       document.getElementById('modal-phone-text').textContent = lead.phone || 'Telefon Yok';
 
       document.getElementById('modal-pitch-text').textContent = 
-        `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak profilinizde resmi bir web sayfası ekli değil. Müşterileriniz doğrudan randevu ve kurumsal hizmetlerinizi görmek istiyor. 48 saatte yayına hazır web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
+        `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
 
       document.getElementById('modal-note-input').value = lead.notes || '';
+
+      updateModalOutcomeUI(lead.status || 'Aranacak');
 
       document.getElementById('call-modal').classList.remove('hidden');
       lucide.createIcons();
@@ -520,15 +715,51 @@
       document.getElementById('call-modal').classList.add('hidden');
     }
 
-    function setModalOutcome(status) {
+    // TİKLİ & GERİ ALINABİLİR SEÇİM FONKSİYONU
+    function toggleModalOutcome(targetStatus) {
       const lead = filteredList[modalIndex];
       if (!lead) return;
-      lead.status = status;
+
+      const currentStatus = lead.status || 'Aranacak';
+
+      // Eğer zaten seçiliyse -> İPTAL ET (Aranacak durumuna geri döndür)
+      if (currentStatus === targetStatus) {
+        lead.status = 'Aranacak';
+      } else {
+        // Değilse yeni durumu ata
+        lead.status = targetStatus;
+      }
+
       saveData();
       renderTable();
       updateKPIs();
-      // Auto move next in modal
-      setTimeout(() => modalNext(), 350);
+      updateModalOutcomeUI(lead.status);
+    }
+
+    function updateModalOutcomeUI(currentStatus) {
+      document.getElementById('modal-current-status').textContent = `Durum: ${currentStatus}`;
+
+      const buttons = [
+        { id: 'btn-out-teklif', status: 'Teklif Verildi', color: 'indigo' },
+        { id: 'btn-out-randevu', status: 'Randevu Alındı', color: 'cyan' },
+        { id: 'btn-out-cevapsiz', status: 'Cevapsız', color: 'amber' },
+        { id: 'btn-out-istemiyor', status: 'İstemiyor', color: 'rose' },
+        { id: 'btn-out-satildi', status: 'Satış Yapıldı', color: 'emerald' }
+      ];
+
+      buttons.forEach(b => {
+        const el = document.getElementById(b.id);
+        if (!el) return;
+        const checkIcon = el.querySelector('.check-icon');
+
+        if (currentStatus === b.status) {
+          el.classList.add('active', 'ring-2', `ring-${b.color}-400`, `bg-${b.color}-600/30`);
+          if (checkIcon) checkIcon.classList.remove('hidden');
+        } else {
+          el.classList.remove('active', 'ring-2', 'ring-indigo-400', 'ring-cyan-400', 'ring-amber-400', 'ring-rose-400', 'ring-emerald-400', 'bg-indigo-600/30', 'bg-cyan-600/30', 'bg-amber-600/30', 'bg-rose-600/30', 'bg-emerald-600/30');
+          if (checkIcon) checkIcon.classList.add('hidden');
+        }
+      });
     }
 
     function saveModalNote(val) {
@@ -541,77 +772,55 @@
     }
 
     function modalPrev() {
-      if (modalIndex > 0) {
-        openCallModal(modalIndex - 1);
-      }
+      if (modalIndex > 0) openCallModal(modalIndex - 1);
     }
 
     function modalNext() {
-      if (modalIndex < filteredList.length - 1) {
-        openCallModal(modalIndex + 1);
-      } else {
-        alert('Bu filtrenin son firmasına ulaştınız!');
-      }
+      if (modalIndex < filteredList.length - 1) openCallModal(modalIndex + 1);
     }
 
     function saveData() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads));
     }
 
-    function updateKPIs() {
-      const total = allLeads.length;
-      const pending = allLeads.filter(l => !l.status || l.status === 'Aranacak').length;
-      const proposal = allLeads.filter(l => l.status === 'Teklif İstendi').length;
-      const won = allLeads.filter(l => l.status === 'Satış Yapıldı').length;
-      const callback = allLeads.filter(l => l.status === 'Tekrar Aranacak').length;
-      const rate = total > 0 ? Math.round((won / total) * 100) : 0;
-
-      document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-pending').textContent = pending;
-      document.getElementById('stat-proposal').textContent = proposal;
-      document.getElementById('stat-won').textContent = won;
-      document.getElementById('stat-callback').textContent = callback;
-      document.getElementById('stat-rate').textContent = `${rate}%`;
-    }
-
     function forceSyncLatestData() {
-      fetchServerData(true).then(() => {
-        populateDropdowns();
-        applyFilters();
-      });
+      fetchServerData(true);
     }
 
     function exportToExcel() {
-      const rows = filteredList.map(l => ({
-        "Firma": l.name,
-        "Şehir": l.city,
-        "İlçe": l.district,
-        "Sektör": l.category,
-        "Telefon": l.phone,
-        "Puan": l.rating,
-        "Yorum Sayısı": l.reviews_count,
-        "Web Sitesi": "YOK",
-        "Durum": l.status || "Aranacak",
-        "Notlar": l.notes || "",
-        "Maps Linki": l.maps_url || ""
+      if (!allLeads.length) {
+        alert('İndirilecek veri yok.');
+        return;
+      }
+      const data = allLeads.map(l => ({
+        'Firma Adı': l.name,
+        'İl': l.city,
+        'İlçe': l.district,
+        'Sektör': l.category,
+        'Telefon': l.phone,
+        'Puan': l.rating,
+        'Yorum Sayısı': l.reviews_count,
+        'Durum': l.status || 'Aranacak',
+        'Görüşme Notu': l.notes || '',
+        'Adres': l.address,
+        'Harita Linki': l.maps_url
       }));
-      const ws = XLSX.utils.json_to_sheet(rows);
+
+      const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Leadler");
-      XLSX.writeFile(wb, "OBLabs_Telesatis_Leadleri.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, 'Websiz Firmalar');
+      XLSX.writeFile(wb, `OB_Labs_Telesatis_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
     function escapeHtml(str) {
       if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
     }
 
-    // Close on ESC
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeCallModal();
-    });
-
-    document.addEventListener('DOMContentLoaded', init);
+    // SAYFA AÇILDIĞINDA OTURUM KONTROLÜ
+    checkAuth();
   </script>
 </body>
 </html>
