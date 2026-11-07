@@ -291,15 +291,26 @@
       lucide.createIcons();
     }
 
-    // Fetch server data
+    // Fetch server data from Cloudflare D1 API
     async function fetchServerData(manual = false) {
       try {
-        const res = await fetch('./leads_data.json?t=' + Date.now());
+        // Önce D1 Canlı Veritabanından çekmeyi dene
+        const res = await fetch('/api/leads?t=' + Date.now());
         if (res.ok) {
           const remote = await res.json();
           if (Array.isArray(remote) && remote.length > 0) {
             mergeLeads(remote);
-            if (manual) alert(`Sunucudan ${remote.length} adet güncel firma verisi başarıyla yüklendi!`);
+            if (manual) alert(`Canlı veritabanından (D1) ${remote.length} adet güncel firma verisi başarıyla yüklendi!`);
+            return;
+          }
+        }
+        
+        // Yedek olarak statik JSON dene
+        const fallbackRes = await fetch('./leads_data.json?t=' + Date.now());
+        if (fallbackRes.ok) {
+          const remote = await fallbackRes.json();
+          if (Array.isArray(remote) && remote.length > 0) {
+            mergeLeads(remote);
           }
         }
       } catch (e) {

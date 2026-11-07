@@ -1,12 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "data-oblabs",
+  "main": "worker.js",
   "compatibility_date": "2024-09-23",
   "workers_dev": true,
   "assets": {
     "directory": "./portal",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+  "d1_databases": [
+    {
+      "binding": "oblabs_leads_db",
+      "database_name": "oblabs-leads-db",
+      "database_id": "d69f7339-57b7-4806-9e33-b8dc5967661e"
+    }
+  ],
   "routes": [
     {
       "pattern": "data.oblabs.com.tr",

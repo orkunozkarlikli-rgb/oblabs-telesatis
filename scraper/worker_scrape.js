@@ -233,8 +233,28 @@ const SECTORS = [
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Dosyaya güvenli yazma
-function appendToMasterFile(newLeads) {
+// Canlı Cloudflare D1 Veritabanına Anlık Senkronizasyon (Sıfır Veri Kaybı)
+async function syncToLiveD1(leads) {
+  if (!leads || !leads.length) return;
+  try {
+    const res = await fetch('https://data.oblabs.com.tr/api/leads/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(leads)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      console.log(`[D1 Cloud Sync] ⚡ ${leads.length} firma doğrudan canlı D1 veritabanına aktarıldı! (Eklenen: ${data.added})`);
+    } else {
+      console.error(`[D1 Cloud Sync] Sunucu yanıt hatası: ${res.status}`);
+    }
+  } catch (err) {
+    console.error(`[D1 Cloud Sync] Bağlantı hatası: ${err.message}`);
+  }
+}
+
+// Dosyaya güvenli yazma ve D1'e basma
+async function appendToMasterFile(newLeads) {
   const masterFile = path.join(__dirname, 'output', 'turkiye_websiz_leadler.json');
   const portalFile = path.join(__dirname, '..', 'portal', 'leads_data.json');
   
@@ -245,12 +265,14 @@ function appendToMasterFile(newLeads) {
 
   const existingPhones = new Set(current.map(l => (l.phone || '').replace(/\D/g, '')).filter(Boolean));
   let added = 0;
+  const toSync = [];
 
   newLeads.forEach(item => {
     const p = (item.phone || '').replace(/\D/g, '');
     if (p && !existingPhones.has(p)) {
       existingPhones.add(p);
       current.push(item);
+      toSync.push(item);
       added++;
     }
   });
@@ -258,6 +280,11 @@ function appendToMasterFile(newLeads) {
   if (added > 0) {
     fs.writeFileSync(masterFile, JSON.stringify(current, null, 2), 'utf-8');
     fs.writeFileSync(portalFile, JSON.stringify(current, null, 2), 'utf-8');
+  }
+
+  // ANLIK OLARAK CANLI D1 VERİTABANINA GÖNDER
+  if (toSync.length > 0) {
+    await syncToLiveD1(toSync);
   }
 
   return { added, total: current.length };
@@ -368,7 +395,7 @@ async function runWorker(workerId) {
             console.log(`[Worker #${workerId}] 🔥 [${loc.city}/${loc.district}] ${lead.name} | Tel: ${lead.phone} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
 
             if (workerBuffer.length >= 5) {
-              const res = appendToMasterFile(workerBuffer);
+              const res = await appendToMasterFile(workerBuffer);
               workerBuffer.length = 0;
               console.log(`[Worker #${workerId}] 💾 Kaydedildi! Toplam Havuz: ${res.total} firma`);
             }
@@ -383,7 +410,7 @@ async function runWorker(workerId) {
   }
 
   if (workerBuffer.length > 0) {
-    appendToMasterFile(workerBuffer);
+    await appendToMasterFile(workerBuffer);
   }
 
   await browser.close();
