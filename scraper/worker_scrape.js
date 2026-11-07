@@ -9,9 +9,9 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 puppeteer.use(StealthPlugin());
 
-// 6 Bağımsız Bölge Grubu (Türkiye'nin En Büyük Ticaret İlçeleri)
+// 12 Bağımsız Bölge Grubu (Tüm Türkiye - 81 İl)
 const WORKER_GROUPS = {
-  // Motor 1: İstanbul Anadolu Yakası (Yoğun Esnaf)
+  // Motor 1: İstanbul Anadolu Yakası
   1: [
     { city: "İstanbul", district: "Kadıköy" },
     { city: "İstanbul", district: "Ümraniye" },
@@ -26,7 +26,7 @@ const WORKER_GROUPS = {
     { city: "İstanbul", district: "Çekmeköy" }
   ],
 
-  // Motor 2: İstanbul Avrupa Yakası Merkez (Plazalar & Hizmet)
+  // Motor 2: İstanbul Avrupa Merkez
   2: [
     { city: "İstanbul", district: "Beşiktaş" },
     { city: "İstanbul", district: "Şişli" },
@@ -54,7 +54,7 @@ const WORKER_GROUPS = {
     { city: "İstanbul", district: "Sultangazi" }
   ],
 
-  // Motor 4: Başkent Ankara
+  // Motor 4: Ankara (Tüm İlçeler)
   4: [
     { city: "Ankara", district: "Çankaya" },
     { city: "Ankara", district: "Yenimahalle" },
@@ -64,10 +64,11 @@ const WORKER_GROUPS = {
     { city: "Ankara", district: "Sincan" },
     { city: "Ankara", district: "Altındağ" },
     { city: "Ankara", district: "Gölbaşı" },
-    { city: "Ankara", district: "Pursaklar" }
+    { city: "Ankara", district: "Pursaklar" },
+    { city: "Ankara", district: "Polatlı" }
   ],
 
-  // Motor 5: Ege'nin İncisi İzmir
+  // Motor 5: İzmir (Tüm İlçeler)
   5: [
     { city: "İzmir", district: "Bornova" },
     { city: "İzmir", district: "Konak" },
@@ -78,26 +79,135 @@ const WORKER_GROUPS = {
     { city: "İzmir", district: "Gaziemir" },
     { city: "İzmir", district: "Karabağlar" },
     { city: "İzmir", district: "Menemen" },
-    { city: "İzmir", district: "Torbalı" }
+    { city: "İzmir", district: "Torbalı" },
+    { city: "İzmir", district: "Aliağa" }
   ],
 
-  // Motor 6: Büyük Sanayi & Turizm İlleri
+  // Motor 6: Marmara Bölgesi
   6: [
     { city: "Bursa", district: "Nilüfer" },
     { city: "Bursa", district: "Osmangazi" },
     { city: "Bursa", district: "Yıldırım" },
+    { city: "Bursa", district: "Gemlik" },
+    { city: "Kocaeli", district: "İzmit" },
+    { city: "Kocaeli", district: "Gebze" },
+    { city: "Kocaeli", district: "Darıca" },
+    { city: "Sakarya", district: "Adapazarı" },
+    { city: "Sakarya", district: "Serdivan" },
+    { city: "Tekirdağ", district: "Süleymanpaşa" },
+    { city: "Tekirdağ", district: "Çerkezköy" },
+    { city: "Edirne", district: "Merkez" },
+    { city: "Yalova", district: "Merkez" },
+    { city: "Çanakkale", district: "Merkez" },
+    { city: "Balıkesir", district: "Karesi" },
+    { city: "Balıkesir", district: "Altıeylül" }
+  ],
+
+  // Motor 7: Ege Bölgesi
+  7: [
     { city: "Antalya", district: "Muratpaşa" },
     { city: "Antalya", district: "Kepez" },
     { city: "Antalya", district: "Konyaaltı" },
-    { city: "Kocaeli", district: "İzmit" },
-    { city: "Kocaeli", district: "Gebze" },
+    { city: "Antalya", district: "Alanya" },
+    { city: "Muğla", district: "Bodrum" },
+    { city: "Muğla", district: "Fethiye" },
+    { city: "Muğla", district: "Marmaris" },
+    { city: "Muğla", district: "Milas" },
+    { city: "Aydın", district: "Efeler" },
+    { city: "Aydın", district: "Kuşadası" },
+    { city: "Denizli", district: "Pamukkale" },
+    { city: "Denizli", district: "Merkezefendi" },
+    { city: "Manisa", district: "Şehzadeler" },
+    { city: "Manisa", district: "Yunusemre" },
+    { city: "Uşak", district: "Merkez" },
+    { city: "Afyonkarahisar", district: "Merkez" }
+  ],
+
+  // Motor 8: Güneydoğu Anadolu
+  8: [
+    { city: "Gaziantep", district: "Şehitkamil" },
+    { city: "Gaziantep", district: "Şahinbey" },
+    { city: "Şanlıurfa", district: "Eyyübiye" },
+    { city: "Şanlıurfa", district: "Haliliye" },
+    { city: "Diyarbakır", district: "Bağlar" },
+    { city: "Diyarbakır", district: "Kayapınar" },
+    { city: "Diyarbakır", district: "Sur" },
+    { city: "Mardin", district: "Artuklu" },
+    { city: "Batman", district: "Merkez" },
+    { city: "Siirt", district: "Merkez" },
+    { city: "Adıyaman", district: "Merkez" },
+    { city: "Kahramanmaraş", district: "Onikişubat" },
+    { city: "Kahramanmaraş", district: "Dulkadiroğlu" }
+  ],
+
+  // Motor 9: Akdeniz & Güney
+  9: [
     { city: "Adana", district: "Seyhan" },
     { city: "Adana", district: "Çukurova" },
-    { city: "Gaziantep", district: "Şehitkamil" },
-    { city: "Konya", district: "Selçuklu" },
-    { city: "Kayseri", district: "Melikgazi" },
+    { city: "Adana", district: "Yüreğir" },
     { city: "Mersin", district: "Yenişehir" },
-    { city: "Eskişehir", district: "Tepebaşı" }
+    { city: "Mersin", district: "Mezitli" },
+    { city: "Mersin", district: "Toroslar" },
+    { city: "Hatay", district: "Antakya" },
+    { city: "Hatay", district: "İskenderun" },
+    { city: "Hatay", district: "Payas" },
+    { city: "Osmaniye", district: "Merkez" },
+    { city: "Isparta", district: "Merkez" },
+    { city: "Burdur", district: "Merkez" }
+  ],
+
+  // Motor 10: Karadeniz Bölgesi
+  10: [
+    { city: "Samsun", district: "İlkadım" },
+    { city: "Samsun", district: "Atakum" },
+    { city: "Samsun", district: "Canik" },
+    { city: "Trabzon", district: "Ortahisar" },
+    { city: "Trabzon", district: "Yomra" },
+    { city: "Ordu", district: "Altınordu" },
+    { city: "Giresun", district: "Merkez" },
+    { city: "Rize", district: "Merkez" },
+    { city: "Zonguldak", district: "Merkez" },
+    { city: "Zonguldak", district: "Ereğli" },
+    { city: "Karabük", district: "Merkez" },
+    { city: "Kastamonu", district: "Merkez" },
+    { city: "Sinop", district: "Merkez" },
+    { city: "Bartın", district: "Merkez" }
+  ],
+
+  // Motor 11: İç Anadolu
+  11: [
+    { city: "Konya", district: "Selçuklu" },
+    { city: "Konya", district: "Meram" },
+    { city: "Konya", district: "Karatay" },
+    { city: "Kayseri", district: "Melikgazi" },
+    { city: "Kayseri", district: "Kocasinan" },
+    { city: "Eskişehir", district: "Tepebaşı" },
+    { city: "Eskişehir", district: "Odunpazarı" },
+    { city: "Sivas", district: "Merkez" },
+    { city: "Çorum", district: "Merkez" },
+    { city: "Yozgat", district: "Merkez" },
+    { city: "Nevşehir", district: "Merkez" },
+    { city: "Niğde", district: "Merkez" },
+    { city: "Aksaray", district: "Merkez" },
+    { city: "Kırıkkale", district: "Merkez" },
+    { city: "Kırşehir", district: "Merkez" }
+  ],
+
+  // Motor 12: Doğu Anadolu
+  12: [
+    { city: "Malatya", district: "Battalgazi" },
+    { city: "Malatya", district: "Yeşilyurt" },
+    { city: "Elazığ", district: "Merkez" },
+    { city: "Erzurum", district: "Yakutiye" },
+    { city: "Erzurum", district: "Palandöken" },
+    { city: "Van", district: "İpekyolu" },
+    { city: "Van", district: "Tuşba" },
+    { city: "Erzincan", district: "Merkez" },
+    { city: "Muş", district: "Merkez" },
+    { city: "Bitlis", district: "Merkez" },
+    { city: "Ağrı", district: "Merkez" },
+    { city: "Kars", district: "Merkez" },
+    { city: "Iğdır", district: "Merkez" }
   ]
 };
 

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       worker:
-        description: 'Worker Numarası (1-6 veya all)'
+        description: 'Worker Numarası (1-12 veya all)'
         required: false
         default: 'all'
 
@@ -32,113 +32,218 @@ jobs:
       - name: Chromium / Chrome Kur
         run: cd scraper && npx puppeteer browsers install chrome
 
-      # --- WORKER 1 ---
-      - name: "Worker 1 - İstanbul Anadolu"
+      # --- WORKER 1: İstanbul Anadolu ---
+      - name: "W1 - İstanbul Anadolu"
         run: cd scraper && node worker_scrape.js --worker=1 || true
 
-      - name: "Deploy 1 - Veri Kaydet & Yayınla"
+      - name: "Deploy W1"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git config --global user.name "OB Labs Bot"
           git config --global user.email "bot@oblabs.com.tr"
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 1 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W1 İstanbul Anadolu [skip ci]" || echo "Yeni veri yok"
           git push
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: "Cloudflare Deploy 1"
+      - name: "CF Deploy W1"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      # --- WORKER 2 ---
-      - name: "Worker 2 - İstanbul Avrupa Merkez"
+      # --- WORKER 2: İstanbul Avrupa Merkez ---
+      - name: "W2 - İstanbul Avrupa Merkez"
         run: cd scraper && node worker_scrape.js --worker=2 || true
 
-      - name: "Deploy 2 - Veri Kaydet & Yayınla"
+      - name: "Deploy W2"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 2 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W2 İstanbul Avrupa Merkez [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: "Cloudflare Deploy 2"
+      - name: "CF Deploy W2"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      # --- WORKER 3 ---
-      - name: "Worker 3 - İstanbul Avrupa Sanayi"
+      # --- WORKER 3: İstanbul Avrupa Sanayi ---
+      - name: "W3 - İstanbul Avrupa Sanayi"
         run: cd scraper && node worker_scrape.js --worker=3 || true
 
-      - name: "Deploy 3 - Veri Kaydet & Yayınla"
+      - name: "Deploy W3"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 3 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W3 İstanbul Avrupa Sanayi [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: "Cloudflare Deploy 3"
+      - name: "CF Deploy W3"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      # --- WORKER 4 ---
-      - name: "Worker 4 - Ankara"
+      # --- WORKER 4: Ankara ---
+      - name: "W4 - Ankara"
         run: cd scraper && node worker_scrape.js --worker=4 || true
 
-      - name: "Deploy 4 - Veri Kaydet & Yayınla"
+      - name: "Deploy W4"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 4 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W4 Ankara [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: "Cloudflare Deploy 4"
+      - name: "CF Deploy W4"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      # --- WORKER 5 ---
-      - name: "Worker 5 - İzmir"
+      # --- WORKER 5: İzmir ---
+      - name: "W5 - İzmir"
         run: cd scraper && node worker_scrape.js --worker=5 || true
 
-      - name: "Deploy 5 - Veri Kaydet & Yayınla"
+      - name: "Deploy W5"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 5 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W5 İzmir [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: "Cloudflare Deploy 5"
+      - name: "CF Deploy W5"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      # --- WORKER 6 ---
-      - name: "Worker 6 - Diğer Şehirler"
+      # --- WORKER 6: Marmara ---
+      - name: "W6 - Marmara Bölgesi"
         run: cd scraper && node worker_scrape.js --worker=6 || true
 
-      - name: "Deploy 6 - Veri Kaydet & Yayınla"
+      - name: "Deploy W6"
         run: |
           cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
           git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
-          git commit -m "Auto: Worker 6 tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git commit -m "Auto: W6 Marmara [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: "Cloudflare Deploy 6 (Final)"
+      - name: "CF Deploy W6"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 7: Ege & Antalya ---
+      - name: "W7 - Ege & Antalya"
+        run: cd scraper && node worker_scrape.js --worker=7 || true
+
+      - name: "Deploy W7"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W7 Ege & Antalya [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W7"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 8: Güneydoğu ---
+      - name: "W8 - Güneydoğu Anadolu"
+        run: cd scraper && node worker_scrape.js --worker=8 || true
+
+      - name: "Deploy W8"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W8 Güneydoğu [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W8"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 9: Akdeniz & Adana ---
+      - name: "W9 - Akdeniz & Adana"
+        run: cd scraper && node worker_scrape.js --worker=9 || true
+
+      - name: "Deploy W9"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W9 Akdeniz & Adana [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W9"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 10: Karadeniz ---
+      - name: "W10 - Karadeniz Bölgesi"
+        run: cd scraper && node worker_scrape.js --worker=10 || true
+
+      - name: "Deploy W10"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W10 Karadeniz [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W10"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 11: İç Anadolu ---
+      - name: "W11 - İç Anadolu"
+        run: cd scraper && node worker_scrape.js --worker=11 || true
+
+      - name: "Deploy W11"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W11 İç Anadolu [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W11"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # --- WORKER 12: Doğu Anadolu ---
+      - name: "W12 - Doğu Anadolu"
+        run: cd scraper && node worker_scrape.js --worker=12 || true
+
+      - name: "Deploy W12 (Final)"
+        run: |
+          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+          git commit -m "Auto: W12 Doğu Anadolu - Döngü tamamlandı [skip ci]" || echo "Yeni veri yok"
+          git push
+
+      - name: "CF Deploy W12 (Final)"
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -153,4 +258,4 @@ jobs:
             -H "Authorization: token ${{ secrets.GH_PAT }}" \
             https://api.github.com/repos/OBLabs2026/oblabs-telesatis/actions/workflows/scrape.yml/dispatches \
             -d '{"ref":"main","inputs":{"worker":"all"}}'
-          echo "Yeni döngü başlatıldı!"
+          echo "Yeni döngü başlatıldı! Türkiye turuna devam..."
