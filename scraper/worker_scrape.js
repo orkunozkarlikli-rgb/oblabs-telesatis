@@ -174,13 +174,17 @@ const WORKER_GROUPS = {
     { city: "Bartın", district: "Merkez" }
   ],
 
-  // Motor 11: İç Anadolu
+  // Motor 11: İç Anadolu (Kayseri Genişletilmiş Sanayi & Ticaret Odağı)
   11: [
+    { city: "Kayseri", district: "Melikgazi" },
+    { city: "Kayseri", district: "Kocasinan" },
+    { city: "Kayseri", district: "Talas" },
+    { city: "Kayseri", district: "Hacılar" },
+    { city: "Kayseri", district: "İncesu" },
+    { city: "Kayseri", district: "Develi" },
     { city: "Konya", district: "Selçuklu" },
     { city: "Konya", district: "Meram" },
     { city: "Konya", district: "Karatay" },
-    { city: "Kayseri", district: "Melikgazi" },
-    { city: "Kayseri", district: "Kocasinan" },
     { city: "Eskişehir", district: "Tepebaşı" },
     { city: "Eskişehir", district: "Odunpazarı" },
     { city: "Sivas", district: "Merkez" },
