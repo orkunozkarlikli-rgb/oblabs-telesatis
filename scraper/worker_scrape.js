@@ -305,11 +305,33 @@ async function runWorker(workerId) {
 
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--lang=tr-TR,tr', '--window-size=1280,800']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu',
+      '--lang=tr-TR,tr',
+      '--window-size=1280,800'
+    ]
   });
 
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 800 });
+
+  // Resim, font ve css yüklemelerini engelleyerek hızı 4 katına çıkar
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    const resourceType = req.resourceType();
+    if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
 
   const workerBuffer = [];
 

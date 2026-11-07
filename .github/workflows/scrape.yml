@@ -1,20 +1,21 @@
-name: Otomatik Lead Toplama & Canli D1 Sync
+name: Otomatik Lead Toplama & Canli D1 Sync (Turbo Matrix)
 
 on:
   schedule:
     # Her 2 saatte bir tetiklenir
     - cron: '0 */2 * * *'
   workflow_dispatch:
-    inputs:
-      worker:
-        description: 'Worker Numarası (1-12 veya all)'
-        required: false
-        default: 'all'
 
 jobs:
-  scrape-to-db:
+  parallel-scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 180
+    strategy:
+      # Tüm worker sunucuları aynı anda paralel çalışsın, biri hata verse de diğerleri durmasın
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        worker: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     steps:
       - name: Kodu Çek
@@ -31,29 +32,8 @@ jobs:
       - name: Chromium / Chrome Kur
         run: cd scraper && npx puppeteer browsers install chrome
 
-      - name: Canlı Veritabanına Scraping (Cloudflare D1 Canlı Akış)
+      - name: Worker ${{ matrix.worker }} Canlı Scraping (Turbo D1 Akışı)
         run: |
           cd scraper
-          echo "D1 Canlı Veritabanına Anlık Senkronize Scraper Başlatılıyor..."
-          
-          if [ "${{ github.event.inputs.worker }}" != "" ] && [ "${{ github.event.inputs.worker }}" != "all" ]; then
-            echo "Tek Worker: ${{ github.event.inputs.worker }}"
-            node worker_scrape.js --worker=${{ github.event.inputs.worker }}
-          else
-            echo "Tüm Workerlar Sırayla Çalışıyor..."
-            for w in 1 2 3 4 5 6 7 8 9 10 11 12; do
-              echo ">>> Worker $w Başlatılıyor..."
-              node worker_scrape.js --worker=$w || true
-            done
-          fi
-
-      - name: Yerel JSON Yedeklerini Repoya Kaydet
-        if: always()
-        run: |
-          git config --global user.name "OB Labs Bot"
-          git config --global user.email "bot@oblabs.com.tr"
-          git add scraper/output/turkiye_websiz_leadler.json portal/leads_data.json || true
-          git commit -m "Backup: Periyodik JSON yedeklendi [skip ci]" || echo "Değişiklik yok"
-          git push || echo "Push atlanıldı"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "🚀 Worker #${{ matrix.worker }} Bağımsız Sunucuda Başlatılıyor..."
+          node worker_scrape.js --worker=${{ matrix.worker }}
