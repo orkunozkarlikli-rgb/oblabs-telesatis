@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" class="h-full bg-slate-950 text-slate-100">
+<html lang="tr" class="h-full bg-slate-950 text-slate-100 select-none">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,12 +14,17 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-    .status-btn.active {
-      box-shadow: 0 0 0 2px currentColor;
+    
+    /* Data Hırsızlığına Karşı Güvenlik Koruması */
+    body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 select-none">
+<body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100" oncontextmenu="return false;">
 
   <!-- ================= AUTH GATE (GİRİŞ EKRANI) ================= -->
   <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
@@ -40,7 +45,7 @@
           <label class="block text-xs font-semibold text-slate-300 mb-1">Kullanıcı Adı</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-            <input type="text" id="login-username" required placeholder="Kullanıcı adınız..."
+            <input type="text" id="login-username" required placeholder="mete veya oblabs-admin"
                    class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition">
           </div>
         </div>
@@ -100,8 +105,8 @@
             <span class="hidden sm:inline">Verileri Güncelle</span>
           </button>
 
-          <!-- Excel Export -->
-          <button onclick="exportToExcel()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
+          <!-- Excel Export (SADECE ADMIN GÖREBİLİR) -->
+          <button id="btn-excel-export" onclick="exportToExcel()" class="hidden inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
             <i data-lucide="download" class="w-4 h-4"></i>
             <span class="hidden sm:inline">Excel İndir</span>
           </button>
@@ -109,8 +114,8 @@
           <!-- User Badge & Logout -->
           <div class="h-8 w-px bg-slate-800 mx-1 hidden sm:block"></div>
           <div class="flex items-center gap-2 pl-1">
-            <span id="user-badge" class="hidden sm:inline text-xs font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
-              oblabs-admin
+            <span id="user-badge" class="text-xs font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700 capitalize">
+              Kullanıcı
             </span>
             <button onclick="handleLogout()" title="Çıkış Yap" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 transition">
               <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -294,62 +299,74 @@
           </p>
         </div>
 
-        <!-- OUTCOME BUTTONS (TİKLİ & GERİ ALINABİLİR SEÇİM) -->
+        <!-- OUTCOME BUTTONS (ALTINDA TİKLİ & GERİ ALINABİLİR SEÇİM) -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span>Görüşme Sonucu Seçin (Tekrar basınca iptal olur):</span>
+            <span>Görüşme Sonucu Seçin:</span>
             <span id="modal-current-status" class="font-bold text-blue-400">Durum: Aranacak</span>
           </div>
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="outcome-buttons-container">
-            <!-- Teklif Verildi -->
+          <div class="grid grid-cols-5 gap-2" id="outcome-buttons-container">
+            
+            <!-- 1. Teklif Verildi -->
             <button type="button" onclick="toggleModalOutcome('Teklif Verildi')" id="btn-out-teklif"
-                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
-              <span class="flex items-center gap-1">
+                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+              <span class="text-xs font-semibold text-indigo-400 flex items-center gap-1">
                 <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
-                <span>Teklif</span>
+                <span class="text-[11px]">Teklif</span>
               </span>
-              <span class="check-icon hidden text-[10px] bg-indigo-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+              <div id="tick-teklif" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+                ✓
+              </div>
             </button>
 
-            <!-- Randevu Alındı -->
+            <!-- 2. Randevu Alındı -->
             <button type="button" onclick="toggleModalOutcome('Randevu Alındı')" id="btn-out-randevu"
-                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
-              <span class="flex items-center gap-1">
+                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-cyan-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+              <span class="text-xs font-semibold text-cyan-400 flex items-center gap-1">
                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                <span>Randevu</span>
+                <span class="text-[11px]">Randevu</span>
               </span>
-              <span class="check-icon hidden text-[10px] bg-cyan-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+              <div id="tick-randevu" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+                ✓
+              </div>
             </button>
 
-            <!-- Cevapsız -->
+            <!-- 3. Cevapsız -->
             <button type="button" onclick="toggleModalOutcome('Cevapsız')" id="btn-out-cevapsiz"
-                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-amber-600/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
-              <span class="flex items-center gap-1">
+                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-amber-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+              <span class="text-xs font-semibold text-amber-400 flex items-center gap-1">
                 <i data-lucide="phone-missed" class="w-3.5 h-3.5"></i>
-                <span>Cevapsız</span>
+                <span class="text-[11px]">Cevapsız</span>
               </span>
-              <span class="check-icon hidden text-[10px] bg-amber-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+              <div id="tick-cevapsiz" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+                ✓
+              </div>
             </button>
 
-            <!-- İstemiyor -->
+            <!-- 4. İstemiyor -->
             <button type="button" onclick="toggleModalOutcome('İstemiyor')" id="btn-out-istemiyor"
-                    class="status-btn p-2 rounded-xl bg-slate-950 hover:bg-rose-600/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition flex flex-col items-center gap-1">
-              <span class="flex items-center gap-1">
+                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-rose-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+              <span class="text-xs font-semibold text-rose-400 flex items-center gap-1">
                 <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-                <span>İstemiyor</span>
+                <span class="text-[11px]">İstemiyor</span>
               </span>
-              <span class="check-icon hidden text-[10px] bg-rose-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+              <div id="tick-istemiyor" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+                ✓
+              </div>
             </button>
 
-            <!-- Satış Yapıldı -->
+            <!-- 5. Satış Yapıldı -->
             <button type="button" onclick="toggleModalOutcome('Satış Yapıldı')" id="btn-out-satildi"
-                    class="status-btn p-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-xs font-bold transition flex flex-col items-center gap-1">
-              <span class="flex items-center gap-1">
+                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-emerald-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
                 <i data-lucide="party-popper" class="w-3.5 h-3.5"></i>
-                <span>Satıldı!</span>
+                <span class="text-[11px]">Satıldı!</span>
               </span>
-              <span class="check-icon hidden text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded-full font-bold">✓ Seçildi</span>
+              <div id="tick-satildi" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+                ✓
+              </div>
             </button>
+
           </div>
 
           <!-- Note Input -->
@@ -377,15 +394,28 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    // AUTHENTICATION
-    const AUTH_KEY = 'oblabs_tele_auth_user';
+    // DATA KORUMA & SAĞ TUŞ YASAĞI
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      // F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+C engelleme
+      if (e.keyCode === 123 || 
+          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
+          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67))) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // KULLANICILAR & CASE-INSENSITIVE LOGIN
+    const AUTH_KEY = 'oblabs_tele_auth_user_v2';
     const VALID_USERS = {
-      'oblabs-admin': '4810218ORk'
+      'oblabs-admin': '4810218ork',
+      'mete': 'mete24635'
     };
 
     function checkAuth() {
       const savedUser = localStorage.getItem(AUTH_KEY);
-      if (savedUser && VALID_USERS[savedUser]) {
+      if (savedUser && VALID_USERS[savedUser.toLowerCase()]) {
         showApp(savedUser);
       } else {
         document.getElementById('login-screen').classList.remove('hidden');
@@ -395,13 +425,16 @@
 
     function handleLogin(e) {
       e.preventDefault();
-      const u = document.getElementById('login-username').value.trim();
-      const p = document.getElementById('login-password').value.trim();
+      const rawUser = document.getElementById('login-username').value.trim();
+      const rawPass = document.getElementById('login-password').value.trim();
 
-      if (VALID_USERS[u] && VALID_USERS[u] === p) {
-        localStorage.setItem(AUTH_KEY, u);
+      const userKey = rawUser.toLowerCase();
+      const passKey = rawPass.toLowerCase();
+
+      if (VALID_USERS[userKey] && VALID_USERS[userKey] === passKey) {
+        localStorage.setItem(AUTH_KEY, userKey);
         document.getElementById('login-error').classList.add('hidden');
-        showApp(u);
+        showApp(userKey);
       } else {
         document.getElementById('login-error').classList.remove('hidden');
       }
@@ -418,6 +451,15 @@
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('app-container').classList.remove('hidden');
       document.getElementById('user-badge').textContent = username;
+
+      // EXCEL İNDİRME SADECE OBLABS-ADMIN İÇİN AÇILIR
+      const excelBtn = document.getElementById('btn-excel-export');
+      if (username.toLowerCase() === 'oblabs-admin') {
+        excelBtn.classList.remove('hidden');
+      } else {
+        excelBtn.classList.add('hidden');
+      }
+
       init();
     }
 
@@ -432,7 +474,6 @@
     let currentFilterStatus = 'ALL';
 
     async function init() {
-      // 1. Önce yerel hafızadan anında yükle (0 milisaniyede sayfa açılır!)
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
@@ -442,7 +483,6 @@
         } catch(e) { allLeads = []; }
       }
 
-      // 2. Arka planda sunucudan en güncel veriyi sessizce çek (Donma yapmaz)
       await fetchServerData(false);
 
       populateDropdowns();
@@ -484,7 +524,7 @@
       });
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads));
-      document.getElementById('header-total-count').textContent = `${allLeads.length} Firma Havuzda`;
+      document.getElementById('header-total-count').textContent = `${allLeads.length.toLocaleString('tr-TR')} Firma Havuzda`;
       updateKPIs();
     }
 
@@ -606,7 +646,6 @@
 
       tbody.innerHTML = pageItems.map((item, idx) => {
         const absoluteIndex = startIndex + idx;
-        const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
 
         let statusClass = 'bg-slate-800 text-slate-300 border-slate-700';
         if (item.status === 'Teklif Verildi') statusClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
@@ -705,7 +744,7 @@
 
       document.getElementById('modal-note-input').value = lead.notes || '';
 
-      updateModalOutcomeUI(lead.status || 'Aranacak');
+      updateOutcomeTicks(lead.status || 'Aranacak');
 
       document.getElementById('call-modal').classList.remove('hidden');
       lucide.createIcons();
@@ -715,49 +754,49 @@
       document.getElementById('call-modal').classList.add('hidden');
     }
 
-    // TİKLİ & GERİ ALINABİLİR SEÇİM FONKSİYONU
+    // TİKLİ & GERİ ALINABİLİR SEÇİM
     function toggleModalOutcome(targetStatus) {
       const lead = filteredList[modalIndex];
       if (!lead) return;
 
       const currentStatus = lead.status || 'Aranacak';
 
-      // Eğer zaten seçiliyse -> İPTAL ET (Aranacak durumuna geri döndür)
+      // Zaten seçiliyse -> İPTAL ET (Aranacak durumuna geri döner)
       if (currentStatus === targetStatus) {
         lead.status = 'Aranacak';
       } else {
-        // Değilse yeni durumu ata
+        // Yeni durumu ata
         lead.status = targetStatus;
       }
 
       saveData();
       renderTable();
       updateKPIs();
-      updateModalOutcomeUI(lead.status);
+      updateOutcomeTicks(lead.status);
     }
 
-    function updateModalOutcomeUI(currentStatus) {
+    function updateOutcomeTicks(currentStatus) {
       document.getElementById('modal-current-status').textContent = `Durum: ${currentStatus}`;
 
-      const buttons = [
-        { id: 'btn-out-teklif', status: 'Teklif Verildi', color: 'indigo' },
-        { id: 'btn-out-randevu', status: 'Randevu Alındı', color: 'cyan' },
-        { id: 'btn-out-cevapsiz', status: 'Cevapsız', color: 'amber' },
-        { id: 'btn-out-istemiyor', status: 'İstemiyor', color: 'rose' },
-        { id: 'btn-out-satildi', status: 'Satış Yapıldı', color: 'emerald' }
+      const config = [
+        { btnId: 'btn-out-teklif', tickId: 'tick-teklif', status: 'Teklif Verildi', border: 'border-indigo-500', bg: 'bg-indigo-600', text: 'text-white' },
+        { btnId: 'btn-out-randevu', tickId: 'tick-randevu', status: 'Randevu Alındı', border: 'border-cyan-500', bg: 'bg-cyan-600', text: 'text-white' },
+        { btnId: 'btn-out-cevapsiz', tickId: 'tick-cevapsiz', status: 'Cevapsız', border: 'border-amber-500', bg: 'bg-amber-600', text: 'text-white' },
+        { btnId: 'btn-out-istemiyor', tickId: 'tick-istemiyor', status: 'İstemiyor', border: 'border-rose-500', bg: 'bg-rose-600', text: 'text-white' },
+        { btnId: 'btn-out-satildi', tickId: 'tick-satildi', status: 'Satış Yapıldı', border: 'border-emerald-500', bg: 'bg-emerald-600', text: 'text-white' }
       ];
 
-      buttons.forEach(b => {
-        const el = document.getElementById(b.id);
-        if (!el) return;
-        const checkIcon = el.querySelector('.check-icon');
+      config.forEach(item => {
+        const btn = document.getElementById(item.btnId);
+        const tick = document.getElementById(item.tickId);
+        if (!btn || !tick) return;
 
-        if (currentStatus === b.status) {
-          el.classList.add('active', 'ring-2', `ring-${b.color}-400`, `bg-${b.color}-600/30`);
-          if (checkIcon) checkIcon.classList.remove('hidden');
+        if (currentStatus === item.status) {
+          btn.className = `p-2.5 rounded-xl bg-slate-900 border-2 ${item.border} transition flex flex-col items-center justify-between gap-1.5 cursor-pointer shadow-lg`;
+          tick.className = `w-5 h-5 rounded-full ${item.bg} ${item.text} flex items-center justify-center text-[11px] font-bold shadow`;
         } else {
-          el.classList.remove('active', 'ring-2', 'ring-indigo-400', 'ring-cyan-400', 'ring-amber-400', 'ring-rose-400', 'ring-emerald-400', 'bg-indigo-600/30', 'bg-cyan-600/30', 'bg-amber-600/30', 'bg-rose-600/30', 'bg-emerald-600/30');
-          if (checkIcon) checkIcon.classList.add('hidden');
+          btn.className = 'p-2.5 rounded-xl bg-slate-950 hover:bg-slate-900/60 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer';
+          tick.className = 'w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition';
         }
       });
     }
@@ -788,6 +827,12 @@
     }
 
     function exportToExcel() {
+      const currentUser = localStorage.getItem(AUTH_KEY);
+      if (currentUser !== 'oblabs-admin') {
+        alert('Bu işlem için admin yetkisi gereklidir.');
+        return;
+      }
+
       if (!allLeads.length) {
         alert('İndirilecek veri yok.');
         return;
