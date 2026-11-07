@@ -2,13 +2,12 @@ name: Otomatik Lead Toplama & Deploy (Cloud Scraping)
 
 on:
   schedule:
-    # Her 4 saatte bir otomatik çalışır
-    - cron: '0 */4 * * *'
+    # Yedek: Her 2 saatte bir (workflow kendini zaten tetikliyor ama güvenlik için)
+    - cron: '0 */2 * * *'
   workflow_dispatch:
-    # GitHub arayüzünden tek tıkla "Run workflow" diyerek elle de başlatılabilir
     inputs:
       worker:
-        description: 'Çalıştırılacak Worker Numarası (1-6 veya all)'
+        description: 'Worker Numarası (1-6 veya all)'
         required: false
         default: 'all'
 
@@ -20,6 +19,8 @@ jobs:
     steps:
       - name: Kodu Çek
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Node.js Kur
         uses: actions/setup-node@v4
@@ -39,23 +40,16 @@ jobs:
       - name: Tarayıcıyı Çalıştır (Scraping)
         run: |
           cd scraper
-          # Eğer elle belirli worker seçildiyse onu çalıştır, yoksa sırayla 1, 2, 3, 4, 5, 6 tara
-          if [ "${{ github.event.inputs.worker }}" != "" ] && [ "${{ github.event.inputs.worker }}" != "all" ]; then
-            echo "Tek Worker Çalışıyor: ${{ github.event.inputs.worker }}"
-            node worker_scrape.js --worker=${{ github.event.inputs.worker }}
-          else
-            echo "Tüm Workerlar Sırayla Çalışıyor..."
-            node worker_scrape.js --worker=1 || true
-            node worker_scrape.js --worker=2 || true
-            node worker_scrape.js --worker=3 || true
-            node worker_scrape.js --worker=4 || true
-            node worker_scrape.js --worker=5 || true
-            node worker_scrape.js --worker=6 || true
-          fi
+          echo "Tüm Workerlar Sırayla Çalışıyor..."
+          node worker_scrape.js --worker=1 || true
+          node worker_scrape.js --worker=2 || true
+          node worker_scrape.js --worker=3 || true
+          node worker_scrape.js --worker=4 || true
+          node worker_scrape.js --worker=5 || true
+          node worker_scrape.js --worker=6 || true
 
       - name: Verileri Portala Senkronize Et
-        run: |
-          cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
+        run: cp scraper/output/turkiye_websiz_leadler.json portal/leads_data.json
 
       - name: Yeni Verileri GitHub Reposuna Kaydet (Commit & Push)
         run: |
@@ -65,9 +59,23 @@ jobs:
           git commit -m "Auto-scrape: Yeni toplanan firmalar eklendi [skip ci]" || echo "Yeni veri yok"
           git push
 
-      - name: Cloudflare Pages / Worker Deploy (data.oblabs.com.tr)
+      - name: Cloudflare Deploy (data.oblabs.com.tr)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      - name: 1 Dakika Bekle
+        run: |
+          echo "Deploy tamamlandi! 1 dakika bekleniyor..."
+          sleep 60
+
+      - name: Yeni Döngüyü Başlat (Kendini Tetikle)
+        run: |
+          curl -s -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            https://api.github.com/repos/OBLabs2026/oblabs-telesatis/actions/workflows/scrape.yml/dispatches \
+            -d '{"ref":"main","inputs":{"worker":"all"}}'
+          echo "Yeni scraping dönüsü baslatildi!"
