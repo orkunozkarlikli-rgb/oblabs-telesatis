@@ -209,21 +209,50 @@ const WORKER_GROUPS = {
 
 // TELESATIŞTA EN ÇOK SATAN & EN YÜKSEK GELİRLİ ÖNCELİKLİ SEKTÖRLER
 const SECTORS = [
+  // 1. Sağlık & Estetik (Çok Yüksek Bilet, Güven Odaklı)
   "diş kliniği",
   "özel diş hekimi",
   "güzellik merkezi",
   "lazer epilasyon",
+  "veteriner kliniği",
+  "psikolog danışmanlık",
+  "diyetisyen beslenme",
+
+  // 2. Taşımacılık & Kurtarma (Acil & Güven İhtiyacı)
   "evden eve nakliyat",
   "asansörlü nakliyat",
+  "oto çekici kurtarıcı",
+  "forklift kiralama",
+
+  // 3. Otomotiv & Özel Servisler
   "oto ekspertiz",
   "özel oto servis",
+  "oto tamir",
+  "oto boya kaporta",
+  "oto cam film",
+
+  // 4. Kurumsal & Prestij Hizmetleri
   "mali müşavir",
   "avukat hukuk bürosu",
+  "mimarlık ofisi",
+  "iç mimar dekorasyon",
+  "sigorta acentesi",
+
+  // 5. İmalat, Tadilat & Doğrama (Yüksek Sözleşme Tutarları)
   "alüminyum cam balkon",
   "tadilat dekorasyon",
-  "veteriner kliniği",
-  "oto tamir",
-  "su tesisatçısı"
+  "demir doğrama ferforje",
+  "çelik çatı sundurma",
+  "mobilya imalat atölyesi",
+
+  // 6. Tesisat, Güvenlik & Endüstriyel Hizmetler
+  "güvenlik alarm kamera sistemleri",
+  "endüstriyel temizlik şirketi",
+  "koltuk halı yıkama",
+  "klima kombi servisi",
+  "su tesisatçısı",
+  "elektrikçi",
+  "düğün kına organizasyon"
 ];
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -341,14 +370,14 @@ async function runWorker(workerId) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await sleep(1000 + Math.random() * 500);
 
-        // Hızlı Scroll
-        for (let s = 0; s < 4; s++) {
+        // Hızlı Derin Scroll (Daha fazla sonuç yükle)
+        for (let s = 0; s < 8; s++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]');
             if (feed) feed.scrollTop = feed.scrollHeight;
-            else window.scrollBy(0, 1000);
+            else window.scrollBy(0, 1200);
           });
-          await sleep(400 + Math.random() * 300);
+          await sleep(250 + Math.random() * 200);
         }
 
         const placeLinks = await page.evaluate(() => {
@@ -357,12 +386,12 @@ async function runWorker(workerId) {
             .filter(h => h && h.includes('/maps/place/'));
         });
 
-        const uniqueLinks = [...new Set(placeLinks)].slice(0, 15);
+        const uniqueLinks = [...new Set(placeLinks)].slice(0, 35);
 
         for (const link of uniqueLinks) {
           try {
-            await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 12000 });
-            await sleep(500 + Math.random() * 300);
+            await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 10000 });
+            await sleep(350 + Math.random() * 200);
 
             const data = await page.evaluate(() => {
               const name = document.querySelector('h1')?.textContent?.trim() || '';
