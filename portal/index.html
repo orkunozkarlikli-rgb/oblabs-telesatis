@@ -88,19 +88,11 @@
               <span class="font-bold text-lg tracking-tight text-white">OB Labs</span>
               <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Telesatış Portalı</span>
             </div>
-            <div class="text-xs text-slate-400 flex items-center gap-2 flex-wrap mt-1">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold text-xs shadow-sm">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span id="header-delta-count">+0 Firma Eklendi</span>
-              </span>
-              <div class="flex items-center gap-1.5 text-[11px] bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
-                <span class="text-slate-400">Önceki:</span>
-                <span id="header-prev-sync" class="text-slate-300 font-mono font-medium">--:--:--</span>
-                <span class="text-slate-600">&rarr;</span>
-                <span class="text-slate-400">Son:</span>
-                <span id="header-last-sync" class="text-cyan-400 font-mono font-medium">--:--:--</span>
-                <span class="text-amber-400 font-semibold ml-1">(<span id="header-elapsed-time">0 sn</span>)</span>
-              </div>
+            <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Canlı D1 Bulut</span>
+              <span class="text-slate-600">&bull;</span>
+              <span id="header-total-count" class="text-slate-300 font-semibold">0 Firma Havuzda</span>
             </div>
           </div>
         </div>
@@ -140,15 +132,8 @@
       <!-- KPI / STATUS SUMMARY CARDS -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-          <div class="flex items-center justify-between">
-            <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
-            <span id="kpi-new-badge" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+0 Firma</span>
-          </div>
+          <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
           <div id="stat-total" class="text-xl font-bold text-white mt-0.5">0</div>
-          <div class="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
-            <span>Önceki: <span id="kpi-prev-time" class="text-slate-300 font-mono">--:--</span></span>
-            <span>Son: <span id="kpi-last-time" class="text-cyan-400 font-mono">--:--</span></span>
-          </div>
         </div>
         <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
           <div class="text-[11px] text-slate-400 font-medium">Aranacaklar</div>
@@ -478,8 +463,8 @@
       init();
     }
 
-    // LEAD DATA & REFRESH TRACKING (TÜRKİYE SAATİNE GÖRE)
-    const STORAGE_KEY = 'oblabs_leads_v6_clean';
+    // LEAD DATA & REFRESH
+    const STORAGE_KEY = 'oblabs_leads_v7';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -487,185 +472,95 @@
     let currentPage = 1;
     let modalIndex = 0;
     let currentFilterStatus = 'ALL';
-    let latestTimestamp = '';
     let dbTotalCount = 0;
 
-    // Önceki Yenileme Saati ve Sayısı Takibi
-    let prevRefreshDate = null;
-    let prevRefreshCount = null;
-
-    function updateRefreshTimes(newTotal) {
-      const now = new Date();
-      // Türkiye Saatine (Europe/Istanbul) göre kesin saat
-      const nowStr = now.toLocaleTimeString('tr-TR', {
-        timeZone: 'Europe/Istanbul',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
-      if (!prevRefreshDate) {
-        prevRefreshDate = now;
-        prevRefreshCount = newTotal;
-
-        const elPrev = document.getElementById('header-prev-sync');
-        const elLast = document.getElementById('header-last-sync');
-        const elDelta = document.getElementById('header-delta-count');
-        const elTime = document.getElementById('header-elapsed-time');
-
-        const elKpi = document.getElementById('kpi-new-badge');
-        const elKpiPrev = document.getElementById('kpi-prev-time');
-        const elKpiLast = document.getElementById('kpi-last-time');
-
-        if (elPrev) elPrev.textContent = nowStr;
-        if (elLast) elLast.textContent = nowStr;
-        if (elDelta) elDelta.textContent = `0 Firma Eklendi`;
-        if (elTime) elTime.textContent = `İlk Yükleme`;
-
-        if (elKpi) elKpi.textContent = `0 Firma`;
-        if (elKpiPrev) elKpiPrev.textContent = nowStr.substring(0, 5);
-        if (elKpiLast) elKpiLast.textContent = nowStr.substring(0, 5);
-        return;
-      }
-
-      // Önceki refresh ile şu anki refresh arasındaki fark ve geçen süre
-      const delta = Math.max(0, newTotal - prevRefreshCount);
-      const diffMs = now - prevRefreshDate;
-      const diffSec = Math.round(diffMs / 1000);
-      const diffMin = (diffSec / 60).toFixed(1);
-      const elapsedLabel = diffSec < 60 ? `${diffSec} sn` : `${diffMin} dk`;
-
-      const prevStr = prevRefreshDate.toLocaleTimeString('tr-TR', {
-        timeZone: 'Europe/Istanbul',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
-      const elPrev = document.getElementById('header-prev-sync');
-      const elLast = document.getElementById('header-last-sync');
-      const elDelta = document.getElementById('header-delta-count');
-      const elTime = document.getElementById('header-elapsed-time');
-
-      const elKpi = document.getElementById('kpi-new-badge');
-      const elKpiPrev = document.getElementById('kpi-prev-time');
-      const elKpiLast = document.getElementById('kpi-last-time');
-
-      if (elDelta) elDelta.textContent = `+${delta.toLocaleString('tr-TR')} Firma Eklendi`;
-      if (elPrev) elPrev.textContent = prevStr;
-      if (elLast) elLast.textContent = nowStr;
-      if (elTime) elTime.textContent = elapsedLabel;
-
-      if (elKpi) elKpi.textContent = `+${delta.toLocaleString('tr-TR')} Firma`;
-      if (elKpiPrev) elKpiPrev.textContent = prevStr.substring(0, 5);
-      if (elKpiLast) elKpiLast.textContent = nowStr.substring(0, 5);
-
-      // Bir sonraki yenileme döngüsü için kaydet
-      prevRefreshDate = now;
-      prevRefreshCount = newTotal;
-    }
-
     async function init() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          allLeads = JSON.parse(saved);
-          populateDropdowns();
-          applyFilters();
-        } catch(e) { allLeads = []; }
-      }
-
-      await fetchStats();
-      await fetchServerData(false);
-
+      // 1. Önce static JSON dosyalarını yükle (D1 limitine takılmaz, hızlı)
+      await loadStaticData();
       populateDropdowns();
       applyFilters();
       lucide.createIcons();
 
-      // Her 30 saniyede bir otomatik canlı kontrol ve refresh
-      setInterval(async () => {
-        await fetchIncrementalData();
-      }, 30000);
+      // 2. API'den istatistik güncelle (arka planda, sessizce)
+      setTimeout(() => fetchApiStats(), 3000);
+
+      // 3. Her 60 saniyede yeni firma varsa API'den çek
+      setInterval(() => fetchApiStats(), 60000);
     }
 
-    async function fetchStats() {
+    async function loadStaticData() {
+      const phoneMap = new Map();
+      for (const url of ['/leads_part1.json', '/leads_part2.json']) {
+        try {
+          const res = await fetch(url + '?v=2');
+          if (!res.ok) continue;
+          const data = await res.json();
+          data.forEach(item => {
+            const p = (item.phone || '').replace(/\D/g, '');
+            if (p && !phoneMap.has(p)) {
+              phoneMap.set(p, item);
+              allLeads.push(item);
+            }
+          });
+          updateCountDisplay();
+        } catch(e) {}
+      }
+    }
+
+    async function fetchApiStats() {
       try {
         const res = await fetch('/api/stats?t=' + Date.now());
         if (res.ok) {
           const stats = await res.json();
-          dbTotalCount = stats.total || 0;
-          document.getElementById('stat-total').textContent = dbTotalCount.toLocaleString('tr-TR');
-          updateRefreshTimes(dbTotalCount);
+          if (stats.total) {
+            dbTotalCount = stats.total;
+            updateCountDisplay();
+          }
         }
-      } catch (e) {}
-    }
+      } catch(e) {}
 
-    async function fetchServerData(manual = false) {
+      // API'den yeni firma var mı kontrol et
       try {
-        await fetchStats();
         const res = await fetch('/api/leads?t=' + Date.now());
         if (res.ok) {
           const remote = await res.json();
           if (Array.isArray(remote) && remote.length > 0) {
-            mergeLeads(remote, false);
-            if (manual) alert(`Canlı veritabanından ${remote.length.toLocaleString('tr-TR')} adet güncel firma verisi başarıyla yüklendi!`);
-            return;
+            mergeLeads(remote);
           }
         }
-      } catch (e) {
-        if (manual) alert('Veri alınamadı: ' + e.message);
-      }
+      } catch(e) {}
     }
 
-    async function fetchIncrementalData() {
-      try {
-        const sinceParam = latestTimestamp ? `&since=${encodeURIComponent(latestTimestamp)}` : '';
-        const res = await fetch('/api/leads?t=' + Date.now() + sinceParam);
-        if (res.ok) {
-          const newItems = await res.json();
-          if (Array.isArray(newItems) && newItems.length > 0) {
-            mergeLeads(newItems, true);
-          }
-        }
-        await fetchStats();
-      } catch (e) {}
+    function updateCountDisplay() {
+      const count = Math.max(allLeads.length, dbTotalCount);
+      const el = document.getElementById('header-total-count');
+      if (el) el.textContent = count.toLocaleString('tr-TR') + ' Firma Havuzda';
+      const st = document.getElementById('stat-total');
+      if (st) st.textContent = count.toLocaleString('tr-TR');
     }
 
-    function mergeLeads(newList, isIncremental = false) {
-      let added = 0;
+    function mergeLeads(newList) {
       const phoneMap = new Map();
       allLeads.forEach(l => {
         const p = (l.phone || '').replace(/\D/g, '');
         if (p) phoneMap.set(p, l);
       });
 
+      let added = 0;
       newList.forEach(item => {
-        if (item.created_at && (!latestTimestamp || item.created_at > latestTimestamp)) {
-          latestTimestamp = item.created_at;
-        }
         const cleanPhone = (item.phone || '').replace(/\D/g, '');
         if (cleanPhone && !phoneMap.has(cleanPhone)) {
-          if (isIncremental) {
-            allLeads.unshift(item); // En başa ekle (canlı aksın)
-          } else {
-            allLeads.push(item);
-          }
+          allLeads.unshift(item);
           phoneMap.set(cleanPhone, item);
           added++;
         }
       });
 
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads.slice(0, 500)));
-      } catch(e) {}
-
       if (added > 0) {
         populateDropdowns();
         applyFilters();
       }
-
-      const displayCount = Math.max(allLeads.length, dbTotalCount);
-      document.getElementById('stat-total').textContent = displayCount.toLocaleString('tr-TR');
+      updateCountDisplay();
       updateKPIs();
     }
 
@@ -741,7 +636,6 @@
     }
 
     function updateKPIs() {
-      const total = allLeads.length;
       let pending = 0, proposal = 0, won = 0, callback = 0;
 
       allLeads.forEach(l => {
@@ -752,16 +646,16 @@
         else if (s === 'Randevu Alındı') callback++;
       });
 
-      document.getElementById('stat-total').textContent = total.toLocaleString('tr-TR');
+      updateCountDisplay();
       document.getElementById('stat-pending').textContent = pending.toLocaleString('tr-TR');
       document.getElementById('stat-proposal').textContent = proposal.toLocaleString('tr-TR');
       document.getElementById('stat-won').textContent = won.toLocaleString('tr-TR');
       document.getElementById('stat-callback').textContent = callback.toLocaleString('tr-TR');
 
+      const total = allLeads.length;
       const contacted = total - pending;
       const rate = contacted > 0 ? ((won / contacted) * 100).toFixed(1) : 0;
       document.getElementById('stat-rate').textContent = `${rate}%`;
-      document.getElementById('header-total-count').textContent = `${total.toLocaleString('tr-TR')} Firma Havuzda`;
     }
 
     function renderTable() {
@@ -980,7 +874,10 @@
     }
 
     function forceSyncLatestData() {
-      fetchServerData(true);
+      fetchApiStats().then(() => {
+        const count = Math.max(allLeads.length, dbTotalCount);
+        alert(count.toLocaleString('tr-TR') + ' firma veritabanında. Liste güncellendi!');
+      });
     }
 
     function exportToExcel() {
