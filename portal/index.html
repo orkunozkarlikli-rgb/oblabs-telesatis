@@ -88,11 +88,14 @@
               <span class="font-bold text-lg tracking-tight text-white">OB Labs</span>
               <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Telesatış Portalı</span>
             </div>
-            <div class="text-xs text-slate-400 flex items-center gap-1.5">
+            <div class="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
               <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Canlı D1 Bulut</span>
               <span class="text-slate-600">&bull;</span>
-              <span id="header-total-count" class="text-slate-300 font-semibold">0 Firma Havuzda</span>
+              <span id="header-total-count" class="text-slate-300 font-semibold">0 Firma</span>
+              <span class="text-slate-600">&bull;</span>
+              <span class="text-slate-400 text-[11px]">Son Güncelleme: <span id="header-last-sync" class="text-cyan-400 font-mono font-medium">--:--:--</span></span>
+              <span id="header-new-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">+0 Yeni</span>
             </div>
           </div>
         </div>
@@ -132,8 +135,12 @@
       <!-- KPI / STATUS SUMMARY CARDS -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
-          <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
+          <div class="flex items-center justify-between">
+            <div class="text-[11px] text-slate-400 font-medium">Toplam Firma</div>
+            <span id="kpi-new-badge" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+0 Yeni</span>
+          </div>
           <div id="stat-total" class="text-xl font-bold text-white mt-0.5">0</div>
+          <div id="stat-last-time" class="text-[10px] text-slate-500 mt-1">Son Güncelleme: --:--</div>
         </div>
         <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
           <div class="text-[11px] text-slate-400 font-medium">Aranacaklar</div>
@@ -472,6 +479,9 @@
     let currentPage = 1;
     let modalIndex = 0;
     let currentFilterStatus = 'ALL';
+    let totalAddedSession = 0;
+    let latestTimestamp = '';
+    let dbTotalCount = 0;
 
     async function init() {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -483,21 +493,47 @@
         } catch(e) { allLeads = []; }
       }
 
+      await fetchStats();
       await fetchServerData(false);
 
       populateDropdowns();
       applyFilters();
       lucide.createIcons();
+
+      // Her 15 saniyede bir otomatik canlı senkronizasyon (arka planda sessizce)
+      setInterval(async () => {
+        await fetchIncrementalData();
+      }, 15000);
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats?t=' + Date.now());
+        if (res.ok) {
+          const stats = await res.json();
+          dbTotalCount = stats.total || 0;
+          document.getElementById('stat-total').textContent = dbTotalCount.toLocaleString('tr-TR');
+          document.getElementById('header-total-count').textContent = `${dbTotalCount.toLocaleString('tr-TR')} Firma`;
+          
+          if (stats.last_updated) {
+            const dateObj = new Date(stats.last_updated);
+            const timeStr = !isNaN(dateObj) ? dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : new Date().toLocaleTimeString('tr-TR');
+            document.getElementById('header-last-sync').textContent = timeStr;
+            document.getElementById('stat-last-time').textContent = `Son Güncelleme: ${timeStr}`;
+          }
+        }
+      } catch (e) {}
     }
 
     async function fetchServerData(manual = false) {
       try {
+        await fetchStats();
         const res = await fetch('/api/leads?t=' + Date.now());
         if (res.ok) {
           const remote = await res.json();
           if (Array.isArray(remote) && remote.length > 0) {
-            mergeLeads(remote);
-            if (manual) alert(`Canlı veritabanından ${remote.length} adet güncel firma verisi başarıyla yüklendi!`);
+            mergeLeads(remote, false);
+            if (manual) alert(`Canlı veritabanından ${remote.length.toLocaleString('tr-TR')} adet güncel firma verisi başarıyla yüklendi!`);
             return;
           }
         }
@@ -506,7 +542,21 @@
       }
     }
 
-    function mergeLeads(newList) {
+    async function fetchIncrementalData() {
+      try {
+        await fetchStats();
+        const sinceParam = latestTimestamp ? `&since=${encodeURIComponent(latestTimestamp)}` : '';
+        const res = await fetch('/api/leads?t=' + Date.now() + sinceParam);
+        if (res.ok) {
+          const newItems = await res.json();
+          if (Array.isArray(newItems) && newItems.length > 0) {
+            mergeLeads(newItems, true);
+          }
+        }
+      } catch (e) {}
+    }
+
+    function mergeLeads(newList, isIncremental = false) {
       let added = 0;
       const phoneMap = new Map();
       allLeads.forEach(l => {
@@ -515,16 +565,41 @@
       });
 
       newList.forEach(item => {
+        if (item.created_at && (!latestTimestamp || item.created_at > latestTimestamp)) {
+          latestTimestamp = item.created_at;
+        }
         const cleanPhone = (item.phone || '').replace(/\D/g, '');
         if (cleanPhone && !phoneMap.has(cleanPhone)) {
-          allLeads.push(item);
+          if (isIncremental) {
+            allLeads.unshift(item); // En başa ekle (canlı aksın)
+          } else {
+            allLeads.push(item);
+          }
           phoneMap.set(cleanPhone, item);
           added++;
         }
       });
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads));
-      document.getElementById('header-total-count').textContent = `${allLeads.length.toLocaleString('tr-TR')} Firma Havuzda`;
+      // Tarayıcı belleğini korumak için localStorage'a sadece son 500'ü at (QuotaExceededError önleme)
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads.slice(0, 500)));
+      } catch(e) {}
+
+      const nowTimeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('header-last-sync').textContent = nowTimeStr;
+      document.getElementById('stat-last-time').textContent = `Son Güncelleme: ${nowTimeStr}`;
+
+      if (added > 0) {
+        totalAddedSession += added;
+        document.getElementById('header-new-badge').textContent = `+${totalAddedSession.toLocaleString('tr-TR')} Yeni`;
+        document.getElementById('kpi-new-badge').textContent = `+${totalAddedSession.toLocaleString('tr-TR')} Yeni`;
+        populateDropdowns();
+        applyFilters();
+      }
+
+      const displayCount = Math.max(allLeads.length, dbTotalCount);
+      document.getElementById('header-total-count').textContent = `${displayCount.toLocaleString('tr-TR')} Firma`;
+      document.getElementById('stat-total').textContent = displayCount.toLocaleString('tr-TR');
       updateKPIs();
     }
 
@@ -833,7 +908,9 @@
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads.slice(0, 500)));
+      } catch(e) {}
     }
 
     function forceSyncLatestData() {
