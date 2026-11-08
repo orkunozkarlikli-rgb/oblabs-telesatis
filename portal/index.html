@@ -519,8 +519,27 @@
       } catch(e) {}
     }
 
+    const SUPABASE_PUB_URL = 'https://sxvlvvcgkrbjktflroqu.supabase.co';
+    const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
+
     async function fetchApiStats() {
-      // KV cache'ten yeni firmalar varsa çek (D1'e dokunmaz - sınırsız okuma)
+      // 1. Supabase bulutundan en güncel firmaları çek (Sınırsız & Canlı)
+      try {
+        const supaRes = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=10000`, {
+          headers: {
+            'apikey': SUPABASE_PUB_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
+          }
+        });
+        if (supaRes.ok) {
+          const supaData = await supaRes.json();
+          if (Array.isArray(supaData) && supaData.length > 0) {
+            mergeLeads(supaData);
+          }
+        }
+      } catch(e) {}
+
+      // 2. KV cache'ten yeni firmalar varsa çek
       try {
         const res = await fetch('/api/new-leads?t=' + Date.now());
         if (res.ok) {
@@ -872,6 +891,21 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads.slice(0, 500)));
       } catch(e) {}
+
+      // Supabase bulutuna anlık durum ve not senkronizasyonu
+      const lead = filteredList[modalIndex];
+      if (lead && lead.id) {
+        fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_PUB_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUB_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ status: lead.status || 'Aranacak', notes: lead.notes || '' })
+        }).catch(() => {});
+      }
     }
 
     function forceSyncLatestData() {

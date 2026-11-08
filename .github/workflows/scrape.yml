@@ -31,11 +31,16 @@ jobs:
       - name: Chrome Tarayıcısını Kur
         run: cd scraper && npx puppeteer browsers install chrome
 
-      - name: Bulut Motoru #${{ matrix.worker }} Calistir
+      - name: Bulut Motoru Calistir
         env:
           SUPABASE_URL: https://sxvlvvcgkrbjktflroqu.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           cd scraper
-          echo "🚀 Bulut Motoru #${{ matrix.worker }} baslatiliyor..."
-          node worker_scrape.js --worker=${{ matrix.worker }}
+          if [ "${{ matrix.worker }}" = "1" ]; then
+            echo "🚀 Motor #1: Sanayi ve Ticaret Merkezleri Baslatiliyor..."
+            node worker_scrape.js --worker=1
+          else
+            echo "🏖️ Motor #2: Turizm, Butik Otel, Bungalov ve Turlar Baslatiliyor..."
+            node worker_tourism.js
+          fi

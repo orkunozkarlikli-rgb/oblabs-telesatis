@@ -79,9 +79,22 @@ const TOURISM_SECTORS = [
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Canlı D1 Veritabanına da Yaz (Çift Güvence)
+async function syncToLiveD1(leads) {
+  if (!leads || !leads.length) return;
+  try {
+    await fetch('https://data.oblabs.com.tr/api/leads/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(leads)
+    });
+  } catch(e) {}
+}
+
 // Supabase'e Toplu Lead Kaydetme (REST API)
 async function saveToSupabase(leads) {
   if (!leads || !leads.length) return 0;
+  syncToLiveD1(leads); // D1'e de arka planda aktar
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
       method: 'POST',
