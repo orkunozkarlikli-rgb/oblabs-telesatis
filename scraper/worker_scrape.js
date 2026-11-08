@@ -485,14 +485,17 @@ async function runWorker(workerId) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await sleep(1000 + Math.random() * 500);
 
-        // Hızlı Derin Scroll (Daha fazla sonuç yükle)
-        for (let s = 0; s < 8; s++) {
+        // Derin Scroll (12-14 kez kaydırarak haritadaki tüm firmaları yükle)
+        for (let s = 0; s < 12; s++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]');
-            if (feed) feed.scrollTop = feed.scrollHeight;
-            else window.scrollBy(0, 1200);
+            if (feed) {
+              feed.scrollTop = feed.scrollHeight;
+            } else {
+              window.scrollBy(0, 1500);
+            }
           });
-          await sleep(250 + Math.random() * 200);
+          await sleep(350 + Math.random() * 200);
         }
 
         const placeLinks = await page.evaluate(() => {
@@ -501,7 +504,8 @@ async function runWorker(workerId) {
             .filter(h => h && h.includes('/maps/place/'));
         });
 
-        const uniqueLinks = [...new Set(placeLinks)].slice(0, 35);
+        // 35 sınırı yerine haritadaki ilk 80 firmanın tamamını topla
+        const uniqueLinks = [...new Set(placeLinks)].slice(0, 80);
 
         for (const link of uniqueLinks) {
           try {
