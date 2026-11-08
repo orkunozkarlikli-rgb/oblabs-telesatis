@@ -372,6 +372,9 @@ const SECTORS = [
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://sxvlvvcgkrbjktflroqu.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+
 // Canlı Cloudflare D1 Veritabanına Anlık Senkronizasyon (Sıfır Veri Kaybı)
 async function syncToLiveD1(leads) {
   if (!leads || !leads.length) return;
@@ -392,7 +395,27 @@ async function syncToLiveD1(leads) {
   }
 }
 
-// Dosyaya güvenli yazma ve D1'e basma
+// Canlı Supabase Veritabanına Anlık Senkronizasyon (Çift Yedekli)
+async function syncToSupabase(leads) {
+  if (!leads || !leads.length) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=ignore-duplicates'
+      },
+      body: JSON.stringify(leads)
+    });
+    if (res.ok) {
+      console.log(`[Supabase Sync] ⚡ ${leads.length} firma doğrudan canlı Supabase veritabanına aktarıldı!`);
+    }
+  } catch (err) {}
+}
+
+// Dosyaya güvenli yazma ve D1 + Supabase buluta basma
 async function appendToMasterFile(newLeads) {
   const masterFile = path.join(__dirname, 'output', 'turkiye_websiz_leadler.json');
   const portalFile = path.join(__dirname, '..', 'portal', 'leads_data.json');
@@ -417,13 +440,18 @@ async function appendToMasterFile(newLeads) {
   });
 
   if (added > 0) {
-    fs.writeFileSync(masterFile, JSON.stringify(current, null, 2), 'utf-8');
-    fs.writeFileSync(portalFile, JSON.stringify(current, null, 2), 'utf-8');
+    try {
+      fs.writeFileSync(masterFile, JSON.stringify(current, null, 2), 'utf-8');
+      fs.writeFileSync(portalFile, JSON.stringify(current, null, 2), 'utf-8');
+    } catch(e) {}
   }
 
-  // ANLIK OLARAK CANLI D1 VERİTABANINA GÖNDER
+  // ANLIK OLARAK CANLI D1 VE SUPABASE VERİTABANINA GÖNDER
   if (toSync.length > 0) {
-    await syncToLiveD1(toSync);
+    await Promise.allSettled([
+      syncToLiveD1(toSync),
+      syncToSupabase(toSync)
+    ]);
   }
 
   return { added, total: current.length };

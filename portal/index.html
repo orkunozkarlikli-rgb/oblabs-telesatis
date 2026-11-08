@@ -45,7 +45,8 @@
           <label class="block text-xs font-semibold text-slate-300 mb-1">Kullanıcı Adı</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-            <input type="text" id="login-username" required placeholder="mete veya oblabs-admin"
+            <!-- Kullanıcı Giriş Alanı (Temiz Placeholder) -->
+            <input type="text" id="login-username" required placeholder="Kullanıcı Adı"
                    class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition">
           </div>
         </div>
@@ -519,19 +520,7 @@
     }
 
     async function fetchApiStats() {
-      // Sadece COUNT sorgusu - 1 satır okuma, D1 limitini tüketmez
-      try {
-        const res = await fetch('/api/stats?t=' + Date.now());
-        if (res.ok) {
-          const stats = await res.json();
-          if (stats.total) {
-            dbTotalCount = stats.total;
-            updateCountDisplay();
-          }
-        }
-      } catch(e) {}
-
-      // KV cache'ten yeni firmalar (D1'e dokunmaz - sınırsız okuma)
+      // KV cache'ten yeni firmalar varsa çek (D1'e dokunmaz - sınırsız okuma)
       try {
         const res = await fetch('/api/new-leads?t=' + Date.now());
         if (res.ok) {
@@ -544,7 +533,7 @@
     }
 
     function updateCountDisplay() {
-      const count = Math.max(allLeads.length, dbTotalCount);
+      const count = allLeads.length;
       const el = document.getElementById('header-total-count');
       if (el) el.textContent = count.toLocaleString('tr-TR') + ' Firma Havuzda';
       const st = document.getElementById('stat-total');
@@ -887,7 +876,7 @@
 
     function forceSyncLatestData() {
       fetchApiStats().then(() => {
-        const count = Math.max(allLeads.length, dbTotalCount);
+        const count = allLeads.length;
         alert(count.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncel!');
       });
     }
