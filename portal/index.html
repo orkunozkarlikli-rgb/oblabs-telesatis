@@ -489,22 +489,33 @@
     }
 
     async function loadStaticData() {
-      const phoneMap = new Map();
-      for (const url of ['/leads_part1.json', '/leads_part2.json']) {
-        try {
-          const res = await fetch(url + '?v=2');
-          if (!res.ok) continue;
-          const data = await res.json();
-          data.forEach(item => {
-            const p = (item.phone || '').replace(/\D/g, '');
-            if (p && !phoneMap.has(p)) {
-              phoneMap.set(p, item);
-              allLeads.push(item);
+      try {
+        const responses = await Promise.all([
+          fetch('/leads_part1.json?v=3'),
+          fetch('/leads_part2.json?v=3'),
+          fetch('/leads_manual.json?t=' + Date.now()).catch(() => null),
+          fetch('/leads_manual_w1.json?t=' + Date.now()).catch(() => null),
+          fetch('/leads_manual_w2.json?t=' + Date.now()).catch(() => null)
+        ]);
+
+        const phoneMap = new Map();
+        for (const res of responses) {
+          if (!res || !res.ok) continue;
+          try {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              data.forEach(item => {
+                const p = (item.phone || '').replace(/\D/g, '');
+                if (p && !phoneMap.has(p)) {
+                  phoneMap.set(p, item);
+                  allLeads.push(item);
+                }
+              });
             }
-          });
-          updateCountDisplay();
-        } catch(e) {}
-      }
+          } catch(e) {}
+        }
+        updateCountDisplay();
+      } catch(e) {}
     }
 
     async function fetchApiStats() {
