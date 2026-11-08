@@ -11,70 +11,73 @@ puppeteer.use(StealthPlugin());
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://sxvlvvcgkrbjktflroqu.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
 
-// Türkiye'nin En Zengin Turizm & Tatil Merkezleri
+// Türkiye'nin En Zengin Turizm & Tatil Merkezleri (Artvin & Karadeniz En Başta!)
 const TOURISM_LOCATIONS = [
-  // Sakarya Bungalov Havzası
+  // 🌲 ARTVİN & DOĞU KARADENİZ TURİZM HAVZASI (Bungalov, Dağ Evi, Yayla)
+  { city: "Artvin", district: "Şavşat" },
+  { city: "Artvin", district: "Borçka" },
+  { city: "Artvin", district: "Arhavi" },
+  { city: "Artvin", district: "Hopa" },
+  { city: "Artvin", district: "Yusufeli" },
+  { city: "Artvin", district: "Merkez" },
+  { city: "Rize", district: "Çamlıhemşin" },
+  { city: "Rize", district: "Ayder Yaylası" },
+  { city: "Rize", district: "Fındıklı" },
+  { city: "Rize", district: "Ardeşen" },
+  { city: "Rize", district: "İkizdere" },
+  { city: "Trabzon", district: "Uzungöl" },
+  { city: "Trabzon", district: "Çaykara" },
+  { city: "Trabzon", district: "Maçka" },
+
+  // 🏡 SAKARYA & MARMARA DOĞA HAVZASI
   { city: "Sakarya", district: "Sapanca" },
-  // Antalya Sahil Şeridi & Koylar
+  { city: "Bolu", district: "Abant" },
+  { city: "Bolu", district: "Mudurnu" },
+
+  // 🌊 ANTALYA SAHİL & KOYLAR
   { city: "Antalya", district: "Kaş" },
   { city: "Antalya", district: "Kalkan" },
   { city: "Antalya", district: "Alanya" },
   { city: "Antalya", district: "Manavgat" },
   { city: "Antalya", district: "Kemer" },
-  { city: "Antalya", district: "Muratpaşa" },
-  { city: "Antalya", district: "Konyaaltı" },
   { city: "Antalya", district: "Kumluca" },
-  // Muğla & Ege Koyu
+  { city: "Antalya", district: "Olimpos" },
+
+  // ⛵ MUĞLA & EGE KOYLARI
   { city: "Muğla", district: "Bodrum" },
   { city: "Muğla", district: "Fethiye" },
   { city: "Muğla", district: "Marmaris" },
   { city: "Muğla", district: "Datça" },
   { city: "Muğla", district: "Akyaka" },
   { city: "Muğla", district: "Köyceğiz" },
-  // Kapadokya Bölgesi
+
+  // 🎈 KAPADOKYA
   { city: "Nevşehir", district: "Göreme" },
   { city: "Nevşehir", district: "Ürgüp" },
-  { city: "Nevşehir", district: "Avanos" },
   { city: "Nevşehir", district: "Uçhisar" },
-  // İzmir & Çeşme
+
+  // 🏖️ İZMİR & EGE
   { city: "İzmir", district: "Çeşme" },
   { city: "İzmir", district: "Alaçatı" },
   { city: "İzmir", district: "Urla" },
   { city: "İzmir", district: "Seferihisar" },
-  { city: "İzmir", district: "Foça" },
-  { city: "İzmir", district: "Selçuk" },
-  // Balıkesir & Kuzey Ege
   { city: "Balıkesir", district: "Ayvalık" },
-  { city: "Balıkesir", district: "Cunda" },
-  { city: "Balıkesir", district: "Edremit" },
-  { city: "Balıkesir", district: "Altınoluk" },
-  // Doğu Karadeniz Doğa Turizmi
-  { city: "Rize", district: "Çamlıhemşin" },
-  { city: "Rize", district: "Ayder Yaylası" },
-  { city: "Trabzon", district: "Uzungöl" },
-  // Çanakkale Adaları
-  { city: "Çanakkale", district: "Bozcaada" },
-  { city: "Çanakkale", district: "Gökçeada" },
-  { city: "Çanakkale", district: "Assos" },
-  // Bolu & Doğa
-  { city: "Bolu", district: "Abant" },
-  { city: "Yalova", district: "Termal" }
+  { city: "Çanakkale", district: "Bozcaada" }
 ];
 
-// Yüksek Bütçeli Turizm Sektörleri
+// Yüksek Bütçeli Turizm & Konaklama Sektörleri
 const TOURISM_SECTORS = [
   "bungalov evleri",
+  "dağ evi konaklama",
   "butik otel",
   "pansiyon konaklama",
-  "apart otel",
+  "yayla evi ahşap ev",
   "glamping çadır kamp",
-  "dağ evi konaklama",
+  "apart otel",
+  "rafting doğa turları",
   "tekne turu yat kiralama",
   "seyahat turizm acentesi",
-  "kapadokya balon turu",
-  "vip transfer havalimanı",
-  "rafting safari turizm",
-  "termal otel kaplıca"
+  "vip transfer havalimanı"
 ];
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
