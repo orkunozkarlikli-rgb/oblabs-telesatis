@@ -508,6 +508,7 @@
     }
 
     async function fetchApiStats() {
+      // Sadece COUNT sorgusu - 1 satır okuma, D1 limitini tüketmez
       try {
         const res = await fetch('/api/stats?t=' + Date.now());
         if (res.ok) {
@@ -519,9 +520,9 @@
         }
       } catch(e) {}
 
-      // API'den yeni firma var mı kontrol et
+      // KV cache'ten yeni firmalar (D1'e dokunmaz - sınırsız okuma)
       try {
-        const res = await fetch('/api/leads?t=' + Date.now());
+        const res = await fetch('/api/new-leads?t=' + Date.now());
         if (res.ok) {
           const remote = await res.json();
           if (Array.isArray(remote) && remote.length > 0) {
@@ -876,7 +877,7 @@
     function forceSyncLatestData() {
       fetchApiStats().then(() => {
         const count = Math.max(allLeads.length, dbTotalCount);
-        alert(count.toLocaleString('tr-TR') + ' firma veritabanında. Liste güncellendi!');
+        alert(count.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncel!');
       });
     }
 

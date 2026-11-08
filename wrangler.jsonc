@@ -16,6 +16,15 @@
       "database_id": "d69f7339-57b7-4806-9e33-b8dc5967661e"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "LEADS_KV",
+      "id": "cbbc83841fb74273b9ea003cb5c4c0c2"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 2 * * *"]
+  },
   "routes": [
     {
       "pattern": "data.oblabs.com.tr",
