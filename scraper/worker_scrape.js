@@ -485,34 +485,130 @@ async function runWorker(workerId) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await sleep(1000 + Math.random() * 500);
 
-        // Derin Scroll (12-14 kez kaydırarak haritadaki tüm firmaları yükle)
-        for (let s = 0; s < 12; s++) {
+        // Derin Hızlı Scroll (10 kez kaydırarak listedeki tüm firmaları aç)
+        for (let s = 0; s < 10; s++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]');
-            if (feed) {
-              feed.scrollTop = feed.scrollHeight;
-            } else {
-              window.scrollBy(0, 1500);
-            }
+            if (feed) feed.scrollTop = feed.scrollHeight;
+            else window.scrollBy(0, 1500);
           });
-          await sleep(350 + Math.random() * 200);
+          await sleep(300 + Math.random() * 200);
         }
 
-        const placeLinks = await page.evaluate(() => {
-          return Array.from(document.querySelectorAll('a'))
-            .map(a => a.href)
-            .filter(h => h && h.includes('/maps/place/'));
-        });
+        // 🚀 ULTRA HIZLI ANLIK KART AYIKLAMA (Tek tek sayfa açmadan doğrudan feed'den çek)
+        const extracted = await page.evaluate((defaultCategory) => {
+          const feed = document.querySelector('div[role="feed"]');
+          if (!feed) return { directLeads: [], checkLinks: [] };
 
-        // 35 sınırı yerine haritadaki ilk 80 firmanın tamamını topla
-        const uniqueLinks = [...new Set(placeLinks)].slice(0, 80);
+          const placeLinks = Array.from(feed.querySelectorAll('a[href*="/maps/place/"]'));
+          const directLeads = [];
+          const checkLinks = [];
+          const seenLinks = new Set();
 
-        for (const link of uniqueLinks) {
+          for (const a of placeLinks) {
+            const href = a.href;
+            if (!href || seenLinks.has(href)) continue;
+            seenLinks.add(href);
+
+            // Kart kapsayıcısını bul
+            let card = a.closest('div[role="article"]') || a.parentElement;
+            while (card && !card.getAttribute('role') && card.parentElement && card.parentElement.getAttribute('role') !== 'feed') {
+              card = card.parentElement;
+            }
+            if (!card) continue;
+
+            const rawText = card.innerText || '';
+            const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+
+            // 1. Web sitesi olanları ANINDA ELE (Sıfır vakit kaybı)
+            const hasWeb = !!card.querySelector('a[data-value*="Web" i], a[aria-label*="web" i], a[href*="http"]:not([href*="google.com"])') ||
+                           rawText.includes('Web sitesi');
+            if (hasWeb) continue; // Web sitesi var, ATLA!
+
+            // İsim
+            const name = a.getAttribute('aria-label') || lines[0] || '';
+            if (!name) continue;
+
+            // Telefon (05xx, 0212, 0216, 03xx, 0850 vb.)
+            const phoneMatch = rawText.match(/(?:\+90\s*|0)?([2-5][0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{2}[\s.-]?[0-9]{2})/);
+            const phone = phoneMatch ? phoneMatch[0].trim() : '';
+
+            // Puan ve Yorum
+            let rating = 4.5;
+            let reviews = 0;
+            const ratingMatch = rawText.match(/([1-5],[0-9])/);
+            if (ratingMatch) rating = parseFloat(ratingMatch[1].replace(',', '.'));
+            const reviewsMatch = rawText.match(/\(([0-9.]+)\)/);
+            if (reviewsMatch) reviews = parseInt(reviewsMatch[1].replace(/\./g, ''), 10);
+
+            // Kategori ve Adres
+            let category = defaultCategory;
+            let address = '';
+            for (const line of lines) {
+              if (line.includes('·')) {
+                const parts = line.split('·').map(p => p.trim());
+                if (parts[0] && !parts[0].includes('Açık') && !parts[0].includes('Kapalı')) {
+                  category = parts[0];
+                }
+                for (const p of parts) {
+                  if (p.includes('Sk.') || p.includes('Cd.') || p.includes('Cad.') || p.includes('Sok.') || p.includes('Mah.') || p.includes('No:') || p.includes('Sanayi')) {
+                    address = p;
+                  }
+                }
+              }
+            }
+
+            if (phone) {
+              // Telefonu hazır olanları anında al
+              directLeads.push({ name, phone, rating, reviews, category, address, maps_url: href });
+            } else {
+              // Telefonu dışarıda görünmeyenleri detay kontrol listesine ekle
+              checkLinks.push(href);
+            }
+          }
+
+          return { directLeads, checkLinks };
+        }, sector);
+
+        // 1. ANINDA YAKALANANLARI HAVUZA VE D1'E GÖNDER
+        for (const d of extracted.directLeads) {
+          const cleanPhone = (d.phone || '').replace(/\D/g, '');
+          if (!cleanPhone || cleanPhone.length < 8) continue;
+
+          const lead = {
+            id: `tr_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+            name: d.name,
+            district: loc.district,
+            city: loc.city,
+            category: d.category || sector,
+            phone: d.phone,
+            rating: d.rating,
+            reviews_count: d.reviews,
+            address: d.address || `${loc.district}, ${loc.city}`,
+            website: "",
+            status: "Aranacak",
+            notes: "",
+            maps_url: d.maps_url
+          };
+
+          workerBuffer.push(lead);
+          console.log(`[Worker #${workerId}] ⚡ [${loc.city}/${loc.district}] ${lead.name} | Tel: ${lead.phone} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
+
+          if (workerBuffer.length >= 5) {
+            const res = await appendToMasterFile(workerBuffer);
+            workerBuffer.length = 0;
+            console.log(`[Worker #${workerId}] 💾 Kaydedildi! Toplam Havuz: ${res.total} firma`);
+          }
+        }
+
+        // 2. KARTINDA TELEFON YAZMAYAN İLK 8 FİRMANIN İÇİNE HIZLICA GİRİP TELEFONA BAK
+        const topCheckLinks = (extracted.checkLinks || []).slice(0, 8);
+        for (const link of topCheckLinks) {
           try {
-            await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 10000 });
-            await sleep(350 + Math.random() * 200);
+            await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 8000 });
+            await sleep(250 + Math.random() * 150);
 
-            const data = await page.evaluate(() => {
+            const detailData = await page.evaluate(() => {
               const name = document.querySelector('h1')?.textContent?.trim() || '';
               const web = document.querySelector('a[data-item-id="authority"]')?.getAttribute('href') ||
                           document.querySelector('a[aria-label*="web" i]')?.getAttribute('href') || '';
@@ -535,21 +631,21 @@ async function runWorker(workerId) {
               return { name, web, phone, rating, reviews, category, address };
             });
 
-            if (!data.name) continue;
-            if (data.web && data.web.trim().length > 3) continue; // Web sitesi var, ATLA
-            const cleanPhone = (data.phone || '').replace(/\D/g, '');
-            if (!cleanPhone || cleanPhone.length < 8) continue; // Telefon yok, ATLA
+            if (!detailData.name) continue;
+            if (detailData.web && detailData.web.trim().length > 3) continue;
+            const cleanPhone = (detailData.phone || '').replace(/\D/g, '');
+            if (!cleanPhone || cleanPhone.length < 8) continue;
 
             const lead = {
               id: `tr_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-              name: data.name,
+              name: detailData.name,
               district: loc.district,
               city: loc.city,
-              category: data.category || sector,
-              phone: data.phone,
-              rating: data.rating,
-              reviews_count: data.reviews,
-              address: data.address,
+              category: detailData.category || sector,
+              phone: detailData.phone,
+              rating: detailData.rating,
+              reviews_count: detailData.reviews,
+              address: detailData.address,
               website: "",
               status: "Aranacak",
               notes: "",
@@ -564,7 +660,6 @@ async function runWorker(workerId) {
               workerBuffer.length = 0;
               console.log(`[Worker #${workerId}] 💾 Kaydedildi! Toplam Havuz: ${res.total} firma`);
             }
-
           } catch (e) {}
         }
 
