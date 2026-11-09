@@ -98,7 +98,7 @@
         <!-- Action Buttons & User Menu -->
         <div class="flex items-center gap-2 sm:gap-3">
           <!-- Live Sync Button -->
-          <button onclick="forceSyncLatestData()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
+          <button id="btn-sync" onclick="forceSyncLatestData()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
             <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             <span class="hidden sm:inline">Verileri Güncelle</span>
           </button>
@@ -322,10 +322,7 @@
           <div class="flex items-center justify-between text-[11px] text-slate-400">
             <span>Görüşme Sonucu (Kısayol: <span class="font-mono text-blue-400 font-bold">1 - 5</span>):</span>
             <span id="modal-current-status" class="hidden">Durum: Aranacak</span>
-            <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
-              <input type="checkbox" id="modal-auto-advance" checked class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0">
-              <span class="text-[10px] text-emerald-400 font-semibold">Seçince Hemen Sonrakine Geç</span>
-            </label>
+            <span class="text-[10px] text-slate-500 font-medium">Sonucu seçtikten sonra "Sonraki >" ile ilerleyin</span>
           </div>
           <div class="grid grid-cols-5 gap-2" id="outcome-buttons-container">
             
@@ -637,7 +634,7 @@
     const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
 
     // INDEXEDDB HIZLI YEREL DEPO (Sayfa yenilemelerinde 45MB indirmeyi sıfıra indirir, 0.1 sn açılır)
-    const IDB_NAME = 'OBLabsStorage_v2';
+    const IDB_NAME = 'OBLabsStorage_v3';
     const IDB_STORE = 'leads_cache';
 
     function openLocalDB() {
@@ -734,9 +731,6 @@
         lucide.createIcons();
         updateCountDisplay();
         renderStatsPanel(currentUser);
-
-        // Arka planda sessizce yeni eklenen taze firmaları çek
-        syncBackgroundNewLeads();
       } else {
         // İlk defa açılıyorsa statik dosyaları çek ve yerel hafızaya kaydet
         await loadInitialStaticPool();
@@ -748,11 +742,7 @@
         updateCountDisplay();
         renderStatsPanel(currentUser);
         setLocalCachedPool(allLeads);
-        syncBackgroundNewLeads();
       }
-
-      // Canlı akış kontrolü: Her 30 saniyede bir yeni lead kontrolü
-      setInterval(() => pollNewLiveLeads(), 30000);
     }
 
     async function loadInitialStaticPool() {
@@ -1207,14 +1197,7 @@
       saveData();
       renderTable();
       renderKPIDisplay();
-
-      // Seri Arama: Otomatik Sonrakine Geçiş
-      const autoAdvance = document.getElementById('modal-auto-advance')?.checked;
-      if (autoAdvance || fromKeyboard) {
-        setTimeout(() => {
-          modalNext();
-        }, 120);
-      }
+      // Otomatik geçiş kaldırıldı: Kullanıcı sonucu seçtikten sonra karta not yazabilir, yanlış tıkladıysa değiştirebilir ve "Sonraki >" ile ilerler.
     }
 
     function updateOutcomeTicks(currentStatus) {
@@ -1294,9 +1277,22 @@
     }
 
     async function forceSyncLatestData() {
-      await syncBackgroundNewLeads();
-      const current = Math.max(allLeads.length, dbTotalCount, 85600);
-      alert(current.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncellendi!');
+      const btn = document.getElementById('btn-sync');
+      if (btn) btn.disabled = true;
+      try {
+        await loadInitialStaticPool();
+        ensureTestLead();
+        populateDropdowns();
+        computeInitialKPIs();
+        applyFilters();
+        await setLocalCachedPool(allLeads);
+        updateCountDisplay();
+        alert(`${allLeads.length.toLocaleString('tr-TR')} firma havuzda. Veriler başarıyla eşitlendi ve güncellendi!`);
+      } catch (err) {
+        alert('Güncelleme sırasında bir hata oluştu: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     function exportToExcel() {
