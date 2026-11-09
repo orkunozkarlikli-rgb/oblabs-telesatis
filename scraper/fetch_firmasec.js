@@ -32,11 +32,11 @@ function normalizePhone(raw) {
   if (phone.startsWith('90') && phone.length === 12) phone = '0' + phone.slice(2);
   if (!phone.startsWith('0') && phone.length === 10) phone = '0' + phone;
   if (phone.length !== 11) return '';
-  // Geçerli Türkiye alan kodları: 02xx, 03xx, 04xx (sabit), 05xx (cep), 0850 (kurumsal)
   if (!phone.match(/^0[2-58]\d{9}$/)) return '';
   return phone;
 }
 
+// Tüm 42 sektör
 const SECTORS = [
   'zb-guzellik-kozmetik',
   'kb-otomotiv',
@@ -65,11 +65,23 @@ const SECTORS = [
   'mr-ambalaj',
   'mb-bilgisayar-bilisim',
   'kd-makine',
-  'kr-metal'
+  'kr-metal',
+  'tm-hirdavat',
+  'tt-kimya-plastik',
+  'tk-kultur-sanat',
+  'cm-tarim-hayvancilik',
+  'bd-telekomunikasyon',
+  'tr-ithalat-ihracat',
+  'zf-enerji',
+  'zt-finans',
+  'rr-eglence',
+  'fz-denizcilik',
+  'fy-dericilik-ayakkabi',
+  'bb-diger-sektorler'
 ];
 
 async function main() {
-  const targetLeadCount = parseInt(process.env.TARGET_LEADS || '1000', 10);
+  const targetLeadCount = parseInt(process.env.TARGET_LEADS || '2000', 10);
   console.log(`🚀 Firmaseç Veri Toplama Başlatılıyor (Hedef: ${targetLeadCount} yeni firma)...`);
 
   const portalDir = path.resolve(__dirname, '../portal');
@@ -91,7 +103,7 @@ async function main() {
   console.log(`📞 Havuzdaki mevcut telefon sayısı: ${existingPhones.size}`);
 
   const collectedLeads = [];
-  const maxPagesPerSector = 4; // her sayfada 30 firma var
+  const maxPagesPerSector = 10; // Doğru URL formatı: /firmalar/slug/sayfaNo
 
   for (const sectorSlug of SECTORS) {
     if (collectedLeads.length >= targetLeadCount) break;
@@ -104,7 +116,7 @@ async function main() {
 
       const pageUrl = page === 1 
         ? `https://www.firmasec.com/firmalar/${sectorSlug}`
-        : `https://www.firmasec.com/firmalar/${sectorSlug}?sayfa=${page}`;
+        : `https://www.firmasec.com/firmalar/${sectorSlug}/${page}`;
 
       try {
         const res = await fetch(pageUrl, {
@@ -121,6 +133,7 @@ async function main() {
 
         if (firmUrls.length === 0) break;
 
+        let pageAdded = 0;
         for (const fUrl of firmUrls) {
           if (collectedLeads.length >= targetLeadCount) break;
 
@@ -147,21 +160,16 @@ async function main() {
               continue;
             }
 
-            // Web sitesi kontrolü: Harici web sitesi varsa ATLA (sadece web sitesi olmayanları alıyoruz)
-            // firmasec.com/firma linki kendi profilidir, harici site değildir
+            // Web sitesi kontrolü
             const urlVal = data.url || '';
             const hasExternalWeb = urlVal && !urlVal.includes('firmasec.com');
             const hasWebInText = fHtml.includes('Web Sitesi') && /href="https?:\/\/(?!www\.firmasec|twitter|facebook|instagram)[a-z0-9-.]+\.(?:com|net|org|com\.tr)/i.test(fHtml);
 
-            if (hasExternalWeb || hasWebInText) {
-              continue; // Web sitesi var, elendi
-            }
+            if (hasExternalWeb || hasWebInText) continue;
 
             // Telefon kontrolü
             const phone = normalizePhone(data.telephone || '');
-            if (!phone || existingPhones.has(phone)) {
-              continue; // Telefon yok veya zaten havuzda var
-            }
+            if (!phone || existingPhones.has(phone)) continue;
 
             // İsim kontrolü
             let name = (data.name || '').replace(/[\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -174,7 +182,6 @@ async function main() {
             const street = (addrObj.streetAddress || '').trim();
 
             if (!city && street) {
-              // Adres sonundan il çıkarımı (Örn: "İSTANBUL / PENDİK")
               const parts = street.split('/');
               if (parts.length >= 2) {
                 city = parts[parts.length - 2].trim();
@@ -184,13 +191,10 @@ async function main() {
             if (!city) city = 'İstanbul';
             if (!district) district = 'Merkez';
 
-            // Şehir baş harfi büyüt
             city = city.charAt(0).toLocaleUpperCase('tr-TR') + city.slice(1).toLocaleLowerCase('tr-TR');
             district = district.charAt(0).toLocaleUpperCase('tr-TR') + district.slice(1).toLocaleLowerCase('tr-TR');
 
             const fullAddress = street ? `${street}, ${district}/${city}` : `${district}, ${city}`;
-
-            // Sektör normalizasyonu
             const sectorName = data.department || sectorSlug.replace(/^[a-z]+-/, '').replace(/-/g, ' ');
             const cleanCategory = normalizeSector(sectorName, name);
 
@@ -212,19 +216,19 @@ async function main() {
             existingPhones.add(phone);
             collectedLeads.push(lead);
             sectorAdded++;
+            pageAdded++;
 
-            // Kibar bekleme (sunucuyu yormamak için)
-            await new Promise(r => setTimeout(r, 120));
+            await new Promise(r => setTimeout(r, 80));
           } catch(err) {
-            // Tekil firma hatasında devam et
             continue;
           }
         }
 
-        console.log(`   Sayfa ${page}: +${sectorAdded} yeni firma (Toplam: ${collectedLeads.length})`);
-        await new Promise(r => setTimeout(r, 300));
+        if (pageAdded > 0) {
+          console.log(`   Sayfa ${page}: +${pageAdded} yeni (Toplam bu sektörde: +${sectorAdded} | Genel toplam: ${collectedLeads.length})`);
+        }
+        await new Promise(r => setTimeout(r, 200));
       } catch(err) {
-        console.log(`   Sayfa ${page} hatası, sonraki sayfaya geçiliyor...`);
         break;
       }
     }

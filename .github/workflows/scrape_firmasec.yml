@@ -6,12 +6,12 @@ on:
       target_leads:
         description: 'Toplanacak Hedef Firma Sayısı'
         required: true
-        default: '1000'
+        default: '2500'
 
 jobs:
   scrape-firmasec:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Repoyu Klonla
@@ -26,7 +26,7 @@ jobs:
 
       - name: Bulutta Firmaseç Taramasını Çalıştır
         env:
-          TARGET_LEADS: ${{ github.event.inputs.target_leads || '1000' }}
+          TARGET_LEADS: ${{ github.event.inputs.target_leads || '2500' }}
         run: |
           echo "🚀 Bulut sunucusu baslatildi..."
           echo "Hedef: $TARGET_LEADS yeni web sitesiz firma"
@@ -37,5 +37,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action Bot"
           git add portal/leads_manual.json
-          git diff --staged --quiet || git commit -m "feat: add fresh website-free leads from firmasec [skip ci]"
+          git diff --staged --quiet || git commit -m "feat: add batch of website-free leads from firmasec [skip ci]"
           git push origin main
