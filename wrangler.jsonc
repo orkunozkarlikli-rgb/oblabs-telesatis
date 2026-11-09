@@ -22,9 +22,6 @@
       "id": "cbbc83841fb74273b9ea003cb5c4c0c2"
     }
   ],
-  "triggers": {
-    "crons": ["0 2 * * *"]
-  },
   "routes": [
     {
       "pattern": "data.oblabs.com.tr",
