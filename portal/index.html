@@ -474,9 +474,10 @@
     // KULLANICILAR & CASE-INSENSITIVE LOGIN
     const AUTH_KEY = 'oblabs_tele_auth_user_v2';
     const VALID_USERS = {
+      'oblabs': '4810218ork',
       'oblabs-admin': '4810218ork',
       'mete': 'mete24635',
-      'nazlie': 'Asel1108'
+      'nazlie': 'asel1108'
     };
 
     // TEST FİRMASI — her zaman listenin başında göster
@@ -598,9 +599,9 @@
       const rawPass = document.getElementById('login-password').value.trim();
 
       const userKey = rawUser.toLowerCase();
-      const validPass = VALID_USERS[userKey];
+      const passKey = rawPass.toLowerCase();
 
-      if (validPass && (validPass === rawPass || validPass.toLowerCase() === rawPass.toLowerCase())) {
+      if (VALID_USERS[userKey] && VALID_USERS[userKey].toLowerCase() === passKey) {
         localStorage.setItem(AUTH_KEY, userKey);
         document.getElementById('login-error').classList.add('hidden');
         showApp(userKey);

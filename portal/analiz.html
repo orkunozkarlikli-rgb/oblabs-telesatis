@@ -195,7 +195,7 @@
     function verifyAdminAccess(e) {
       e.preventDefault();
       const val = document.getElementById('admin-pass-input').value.trim();
-      if (val === ADMIN_PASS) {
+      if (val.toLowerCase() === ADMIN_PASS.toLowerCase()) {
         sessionStorage.setItem(AUTH_SESSION_KEY, 'granted');
         document.getElementById('auth-gate').classList.add('hidden');
         initDashboard();

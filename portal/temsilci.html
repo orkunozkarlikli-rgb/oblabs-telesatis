@@ -23,7 +23,7 @@
       <p class="text-xs text-slate-400 mb-5">Çalışma panelinize erişmek için giriş yapın</p>
       
       <form onsubmit="handleTemsilciLogin(event)" class="space-y-3.5">
-        <input id="input-username" type="text" placeholder="Kullanıcı Adı (Örn: mete)" required
+        <input id="input-username" type="text" placeholder="Kullanıcı Adı" required
                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-blue-500 outline-none">
         <input id="input-password" type="password" placeholder="Şifre" required
                class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-blue-500 outline-none">
@@ -287,16 +287,16 @@
     function handleTemsilciLogin(e) {
       e.preventDefault();
       const u = document.getElementById('input-username').value.trim().toLowerCase();
-      const p = document.getElementById('input-password').value.trim();
+      const p = document.getElementById('input-password').value.trim().toLowerCase();
 
       const VALID_USERS = {
+        'oblabs': '4810218ork',
         'oblabs-admin': '4810218ork',
         'mete': 'mete24635',
-        'nazlie': 'Asel1108'
+        'nazlie': 'asel1108'
       };
 
-      const validPass = VALID_USERS[u];
-      if (validPass && (validPass === p || validPass.toLowerCase() === p.toLowerCase())) {
+      if (VALID_USERS[u] && VALID_USERS[u].toLowerCase() === p) {
         localStorage.setItem(AUTH_KEY, u);
         document.getElementById('login-modal').classList.add('hidden');
         initPanel(u);

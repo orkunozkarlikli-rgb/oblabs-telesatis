@@ -124,7 +124,7 @@ export default {
     if (url.pathname === '/api/activity/summary' && request.method === 'GET') {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const repList = await env.LEADS_KV.get('known_reps', { type: 'json' }) || ['mete', 'nazlie', 'oblabs-admin'];
+        const repList = await env.LEADS_KV.get('known_reps', { type: 'json' }) || ['mete', 'nazlie', 'oblabs', 'oblabs-admin'];
 
         const reps = [];
         const now = Date.now();
