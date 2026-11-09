@@ -457,17 +457,37 @@ async function appendToMasterFile(newLeads) {
   return { added, total: current.length };
 }
 
-async function runWorker(workerId) {
-  const locations = WORKER_GROUPS[workerId];
-  if (!locations) {
-    console.error(`Geçersiz worker ID: ${workerId}`);
+async function runWorker(groupSelection) {
+  let selectedGroupIds = [];
+  if (typeof groupSelection === 'string' && groupSelection.includes(',')) {
+    selectedGroupIds = groupSelection.split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean);
+  } else if (Array.isArray(groupSelection)) {
+    selectedGroupIds = groupSelection;
+  } else {
+    selectedGroupIds = [parseInt(groupSelection, 10) || 1];
+  }
+
+  // Seçilen tüm grupların lokasyonlarını birleştir
+  let locations = [];
+  selectedGroupIds.forEach(gid => {
+    if (WORKER_GROUPS[gid]) {
+      locations.push(...WORKER_GROUPS[gid]);
+    }
+  });
+
+  if (!locations.length) {
+    console.error(`Geçersiz worker/group: ${groupSelection}`);
     return;
   }
 
+  // Her seferinde farklı ilçe ve sektörden başlasın (Sıfır tekrar, maksimum hız)
+  locations.sort(() => Math.random() - 0.5);
+  const shuffledSectors = [...SECTORS].sort(() => Math.random() - 0.5);
+
   console.log(`\n======================================================`);
-  console.log(`🚀 WORKER #${workerId} DEVREDE (18 PARALEL TURBO MOTOR)`);
-  console.log(`📍 Görev Bölgesi: ${locations.length} İlçe`);
-  console.log(`🏢 Sektör Sayısı: ${SECTORS.length} Yüksek Gelirli Sektör`);
+  console.log(`🚀 WORKER DEVREDE (Gruplar: ${selectedGroupIds.join(', ')})`);
+  console.log(`📍 Görev Bölgesi: ${locations.length} İlçe (Rastgele Dağıtılmış)`);
+  console.log(`🏢 Sektör Sayısı: ${shuffledSectors.length} Yüksek Gelirli Sektör`);
   console.log(`======================================================\n`);
 
   const browser = await puppeteer.launch({
@@ -505,7 +525,7 @@ async function runWorker(workerId) {
   for (const loc of locations) {
     console.log(`\n[Worker #${workerId}] 📍 Bölge: ${loc.city} - ${loc.district}`);
 
-    for (const sector of SECTORS) {
+    for (const sector of shuffledSectors) {
       const query = `${sector} ${loc.district} ${loc.city}`;
       const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(query)}?hl=tr`;
 
@@ -705,7 +725,20 @@ async function runWorker(workerId) {
   console.log(`[Worker #${workerId}] ✅ Görev tamamlandı!`);
 }
 
+const groupsArg = process.argv.find(a => a.startsWith('--groups='));
 const workerArg = process.argv.find(a => a.startsWith('--worker='));
-const workerId = workerArg ? parseInt(workerArg.split('=')[1], 10) : 1;
 
-runWorker(workerId).catch(console.error);
+let targetGroups = "1";
+if (groupsArg) {
+  targetGroups = groupsArg.split('=')[1];
+} else if (workerArg) {
+  const wVal = workerArg.split('=')[1];
+  // Matrix eşleştirmeleri:
+  if (wVal === '1') targetGroups = "6,7,14,16";       // İç Anadolu & Başkent (Ankara, OSTİM, Konya, Kayseri, Denizli)
+  else if (wVal === '2') targetGroups = "8,9,11,12";   // Ege & Akdeniz (İzmir, Bursa, Antalya, Adana, Mersin)
+  else if (wVal === '3') targetGroups = "13,18";       // Güneydoğu & Doğu (Gaziantep, Urfa, Maraş, Diyarbakır, Erzurum)
+  else if (wVal === '4') targetGroups = "10,15,17";    // Karadeniz & Trakya (Samsun, Trabzon, Artvin, Sakarya, Çorlu)
+  else targetGroups = wVal;
+}
+
+runWorker(targetGroups).catch(console.error);
