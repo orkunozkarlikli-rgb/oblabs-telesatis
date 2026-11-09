@@ -192,13 +192,19 @@
           </select>
         </div>
 
-        <!-- Status Filter Tabs -->
-        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 text-xs">
+        <!-- Status Filter Tabs & Power Dial Button -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
           <button onclick="filterStatus('ALL')" class="status-tab px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold">Tümü</button>
           <button onclick="filterStatus('Aranacak')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Aranacak</button>
           <button onclick="filterStatus('Teklif Verildi')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Teklif</button>
           <button onclick="filterStatus('Randevu Alındı')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Randevu</button>
           <button onclick="filterStatus('Satış Yapıldı')" class="status-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">Satıldı</button>
+
+          <!-- 🚀 SERİ ARAMA / POWER DIAL BUTONU -->
+          <button onclick="startPowerDial()" title="Klavyeden 1-5 tuşlarıyla jet hızında seri arama yapın" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold shadow-lg shadow-emerald-900/30 transition ml-2 whitespace-nowrap cursor-pointer">
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+            <span>Seri Arama Başlat</span>
+          </button>
         </div>
       </div>
 
@@ -311,67 +317,75 @@
         <!-- OUTCOME BUTTONS (ALTINDA TİKLİ & GERİ ALINABİLİR SEÇİM) -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span>Görüşme Sonucu Seçin:</span>
-            <span id="modal-current-status" class="font-bold text-blue-400">Durum: Aranacak</span>
+            <span>Görüşme Sonucu (Kısayol: <span class="font-mono text-blue-400 font-bold">1 - 5</span>):</span>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+              <input type="checkbox" id="modal-auto-advance" checked class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0">
+              <span class="text-[10px] text-emerald-400 font-semibold">Seçince Hemen Sonrakine Geç</span>
+            </label>
           </div>
           <div class="grid grid-cols-5 gap-2" id="outcome-buttons-container">
             
             <!-- 1. Teklif Verildi -->
             <button type="button" onclick="toggleModalOutcome('Teklif Verildi')" id="btn-out-teklif"
-                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+                    class="p-2 rounded-xl bg-slate-950 hover:bg-indigo-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1 cursor-pointer">
+              <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">[1]</span>
               <span class="text-xs font-semibold text-indigo-400 flex items-center gap-1">
                 <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
                 <span class="text-[11px]">Teklif</span>
               </span>
-              <div id="tick-teklif" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+              <div id="tick-teklif" class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] text-transparent transition">
                 ✓
               </div>
             </button>
 
             <!-- 2. Randevu Alındı -->
             <button type="button" onclick="toggleModalOutcome('Randevu Alındı')" id="btn-out-randevu"
-                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-cyan-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+                    class="p-2 rounded-xl bg-slate-950 hover:bg-cyan-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1 cursor-pointer">
+              <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">[2]</span>
               <span class="text-xs font-semibold text-cyan-400 flex items-center gap-1">
                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                 <span class="text-[11px]">Randevu</span>
               </span>
-              <div id="tick-randevu" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+              <div id="tick-randevu" class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] text-transparent transition">
                 ✓
               </div>
             </button>
 
             <!-- 3. Cevapsız -->
             <button type="button" onclick="toggleModalOutcome('Cevapsız')" id="btn-out-cevapsiz"
-                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-amber-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+                    class="p-2 rounded-xl bg-slate-950 hover:bg-amber-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1 cursor-pointer">
+              <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">[3]</span>
               <span class="text-xs font-semibold text-amber-400 flex items-center gap-1">
                 <i data-lucide="phone-missed" class="w-3.5 h-3.5"></i>
                 <span class="text-[11px]">Cevapsız</span>
               </span>
-              <div id="tick-cevapsiz" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+              <div id="tick-cevapsiz" class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] text-transparent transition">
                 ✓
               </div>
             </button>
 
             <!-- 4. İstemiyor -->
             <button type="button" onclick="toggleModalOutcome('İstemiyor')" id="btn-out-istemiyor"
-                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-rose-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+                    class="p-2 rounded-xl bg-slate-950 hover:bg-rose-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1 cursor-pointer">
+              <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">[4]</span>
               <span class="text-xs font-semibold text-rose-400 flex items-center gap-1">
                 <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
                 <span class="text-[11px]">İstemiyor</span>
               </span>
-              <div id="tick-istemiyor" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+              <div id="tick-istemiyor" class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] text-transparent transition">
                 ✓
               </div>
             </button>
 
             <!-- 5. Satış Yapıldı -->
             <button type="button" onclick="toggleModalOutcome('Satış Yapıldı')" id="btn-out-satildi"
-                    class="p-2.5 rounded-xl bg-slate-950 hover:bg-emerald-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1.5 cursor-pointer">
+                    class="p-2 rounded-xl bg-slate-950 hover:bg-emerald-950/40 border border-slate-800 transition flex flex-col items-center justify-between gap-1 cursor-pointer">
+              <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">[5]</span>
               <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
                 <i data-lucide="party-popper" class="w-3.5 h-3.5"></i>
                 <span class="text-[11px]">Satıldı!</span>
               </span>
-              <div id="tick-satildi" class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-transparent transition">
+              <div id="tick-satildi" class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] text-transparent transition">
                 ✓
               </div>
             </button>
@@ -412,6 +426,31 @@
           (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67))) {
         e.preventDefault();
         return false;
+      }
+
+      // ⚡ MODAL AÇIKKEN JET HIZINDA KLAVYE KISAYOLLARI (Sıfır Fare, Maksimum Hız)
+      const modal = document.getElementById('call-modal');
+      const isModalOpen = modal && !modal.classList.contains('hidden');
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      const isTyping = activeTag === 'input' || activeTag === 'textarea';
+
+      if (isModalOpen && !isTyping) {
+        if (e.key === '1') { e.preventDefault(); toggleModalOutcome('Teklif Verildi', true); }
+        else if (e.key === '2') { e.preventDefault(); toggleModalOutcome('Randevu Alındı', true); }
+        else if (e.key === '3') { e.preventDefault(); toggleModalOutcome('Cevapsız', true); }
+        else if (e.key === '4') { e.preventDefault(); toggleModalOutcome('İstemiyor', true); }
+        else if (e.key === '5') { e.preventDefault(); toggleModalOutcome('Satış Yapıldı', true); }
+        else if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); modalNext(); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); modalPrev(); }
+        else if (e.key === 'Escape') { e.preventDefault(); closeCallModal(); }
+        else if (e.code === 'Space') {
+          e.preventDefault();
+          const callBtn = document.getElementById('modal-call-btn');
+          if (callBtn) {
+            handleCallClick();
+            window.location.href = callBtn.href;
+          }
+        }
       }
     });
 
@@ -648,21 +687,45 @@
       }, 200);
     }
 
-    async function init() {
-      // 1. D1 Gerçek havuz toplamını hızlıca al
-      fetch('/api/stats').then(r => r.json()).then(d => {
-        if (d && d.total) {
-          dbTotalCount = d.total;
-          updateCountDisplay();
-        }
-      }).catch(() => {});
+    // GLOBAL KPI SAYILARI (Döngü çalıştırmadan O(1) anında güncelleme, sıfır donma)
+    let globalKPIs = { pending: 0, proposal: 0, won: 0, callback: 0 };
 
-      // 2. Önce tarayıcının yerel hafızasından yıldırım hızında yükle (0.1 saniye)
+    function computeInitialKPIs() {
+      let pending = 0, proposal = 0, won = 0, callback = 0;
+      for (let i = 0; i < allLeads.length; i++) {
+        const s = allLeads[i].status || 'Aranacak';
+        if (s === 'Aranacak') pending++;
+        else if (s === 'Teklif Verildi') proposal++;
+        else if (s === 'Satış Yapıldı') won++;
+        else if (s === 'Randevu Alındı') callback++;
+      }
+      globalKPIs = { pending, proposal, won, callback };
+      renderKPIDisplay();
+    }
+
+    function renderKPIDisplay() {
+      updateCountDisplay();
+      document.getElementById('stat-pending').textContent = globalKPIs.pending.toLocaleString('tr-TR');
+      document.getElementById('stat-proposal').textContent = globalKPIs.proposal.toLocaleString('tr-TR');
+      document.getElementById('stat-won').textContent = globalKPIs.won.toLocaleString('tr-TR');
+      document.getElementById('stat-callback').textContent = globalKPIs.callback.toLocaleString('tr-TR');
+
+      const total = allLeads.length;
+      const contacted = total - globalKPIs.pending;
+      const rate = contacted > 0 ? ((globalKPIs.won / contacted) * 100).toFixed(1) : 0;
+      document.getElementById('stat-rate').textContent = `${rate}%`;
+
+      if (currentUser) renderStatsPanel(currentUser);
+    }
+
+    async function init() {
+      // 1. Önce tarayıcının yerel hafızasından yıldırım hızında yükle (0.1 saniye)
       const cached = await getLocalCachedPool();
       if (cached && Array.isArray(cached) && cached.length > 30000) {
         allLeads = cached;
         ensureTestLead();
         populateDropdowns();
+        computeInitialKPIs();
         applyFilters();
         lucide.createIcons();
         updateCountDisplay();
@@ -675,6 +738,7 @@
         await loadInitialStaticPool();
         ensureTestLead();
         populateDropdowns();
+        computeInitialKPIs();
         applyFilters();
         lucide.createIcons();
         updateCountDisplay();
@@ -683,8 +747,8 @@
         syncBackgroundNewLeads();
       }
 
-      // Canlı akış kontrolü: Her 15 saniyede bir yeni lead kontrolü
-      setInterval(() => pollNewLiveLeads(), 15000);
+      // Canlı akış kontrolü: Her 30 saniyede bir yeni lead kontrolü
+      setInterval(() => pollNewLiveLeads(), 30000);
     }
 
     async function loadInitialStaticPool() {
@@ -736,7 +800,7 @@
       } catch(e) {}
     }
 
-    // 🟢 CANLI AKIŞ: HER 15 SANİYEDE BİR SADECE EN SON 100 FİRMAYI KONTROL ET
+    // 🟢 CANLI AKIŞ: HER 30 SANİYEDE BİR SADECE EN SON 100 FİRMAYI KONTROL ET
     async function pollNewLiveLeads() {
       try {
         const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=100`, {
@@ -755,11 +819,8 @@
     }
 
     function updateCountDisplay() {
-      // Sayaç asla düşmez, her zaman en yüksek görülen veya D1 havuzu toplamını gösterir
-      const storedMax = parseInt(localStorage.getItem('oblabs_max_seen_v3') || '0', 10);
-      const current = Math.max(allLeads.length, dbTotalCount, storedMax, 85600);
-      localStorage.setItem('oblabs_max_seen_v3', current);
-
+      // 1. Madde: Yukarıdaki ve aşağıdaki sayaçları BİREBİR EŞİTLE
+      const current = allLeads.length;
       const el = document.getElementById('header-total-count');
       if (el) {
         el.textContent = `${current.toLocaleString('tr-TR')} Firma Havuzda`;
@@ -768,6 +829,15 @@
       if (st) {
         st.textContent = current.toLocaleString('tr-TR');
       }
+    }
+
+    // Arka plan önbellek yazma kuyruğu (Sürekli diske yazıp tarayıcıyı kitlemez)
+    let idbSaveTimer = null;
+    function scheduleLocalCacheSave() {
+      clearTimeout(idbSaveTimer);
+      idbSaveTimer = setTimeout(() => {
+        setLocalCachedPool(allLeads);
+      }, 5000);
     }
 
     function mergeLeads(newList) {
@@ -789,11 +859,9 @@
 
       if (added > 0) {
         ensureTestLead();
+        computeInitialKPIs();
         applyFilters();
-        updateCountDisplay();
-        updateKPIs();
-        // Yerel hafızaya yeni gelenleri de sessizce kaydet
-        setLocalCachedPool(allLeads);
+        scheduleLocalCacheSave();
       }
     }
 
@@ -865,33 +933,7 @@
 
       currentPage = 1;
       renderTable();
-      updateKPIs();
-    }
-
-    function updateKPIs() {
-      let pending = 0, proposal = 0, won = 0, callback = 0;
-
-      allLeads.forEach(l => {
-        const s = l.status || 'Aranacak';
-        if (s === 'Aranacak') pending++;
-        else if (s === 'Teklif Verildi') proposal++;
-        else if (s === 'Satış Yapıldı') won++;
-        else if (s === 'Randevu Alındı') callback++;
-      });
-
-      updateCountDisplay();
-      document.getElementById('stat-pending').textContent = pending.toLocaleString('tr-TR');
-      document.getElementById('stat-proposal').textContent = proposal.toLocaleString('tr-TR');
-      document.getElementById('stat-won').textContent = won.toLocaleString('tr-TR');
-      document.getElementById('stat-callback').textContent = callback.toLocaleString('tr-TR');
-
-      const total = allLeads.length;
-      const contacted = total - pending;
-      const rate = contacted > 0 ? ((won / contacted) * 100).toFixed(1) : 0;
-      document.getElementById('stat-rate').textContent = `${rate}%`;
-
-      // Kişisel istatistik panelini de güncelle
-      if (currentUser) renderStatsPanel(currentUser);
+      renderKPIDisplay();
     }
 
     function renderTable() {
@@ -992,6 +1034,15 @@
       }
     }
 
+    // 🚀 SERİ ARAMA (POWER DIALER) BAŞLATMA
+    function startPowerDial() {
+      if (!filteredList.length) {
+        alert('Aranacak firma bulunamadı. Lütfen filtrelerinizi kontrol edin.');
+        return;
+      }
+      openCallModal(0);
+    }
+
     // MODAL İŞLEMLERİ
     function openCallModal(index) {
       modalIndex = index;
@@ -1037,11 +1088,12 @@
       // Durumu otomatik olarak "Cevapsız" yap (kullanıcı sonucu kendisi günceller)
       const lead = filteredList[modalIndex];
       if (lead && (!lead.status || lead.status === 'Aranacak')) {
+        globalKPIs.pending--;
         lead.status = 'Cevapsız';
         updateOutcomeTicks('Cevapsız');
         saveData();
         renderTable();
-        updateKPIs();
+        renderKPIDisplay();
       }
     }
 
@@ -1049,27 +1101,41 @@
       document.getElementById('call-modal').classList.add('hidden');
     }
 
-    // TİKLİ & GERİ ALINABİLİR SEÇİM (ANLIK CANLI TEPKİ)
-    function toggleModalOutcome(targetStatus) {
+    // TİKLİ & GERİ ALINABİLİR SEÇİM (ANLIK CANLI TEPKİ & O(1) KPI GÜNCELLEMESİ)
+    function toggleModalOutcome(targetStatus, fromKeyboard = false) {
       const lead = filteredList[modalIndex];
       if (!lead) return;
 
-      const currentStatus = lead.status || 'Aranacak';
+      const oldStatus = lead.status || 'Aranacak';
+      const newStatus = (oldStatus === targetStatus) ? 'Aranacak' : targetStatus;
 
-      // Zaten seçiliyse -> İPTAL ET (Aranacak durumuna geri döner)
-      if (currentStatus === targetStatus) {
-        lead.status = 'Aranacak';
-      } else {
-        // Yeni durumu ata
-        lead.status = targetStatus;
-      }
+      // O(1) anlık KPI güncellemesi (75 bin satırlık döngü çalıştırmaz, 0 ms)
+      if (oldStatus === 'Aranacak') globalKPIs.pending--;
+      else if (oldStatus === 'Teklif Verildi') globalKPIs.proposal--;
+      else if (oldStatus === 'Satış Yapıldı') globalKPIs.won--;
+      else if (oldStatus === 'Randevu Alındı') globalKPIs.callback--;
+
+      lead.status = newStatus;
+
+      if (newStatus === 'Aranacak') globalKPIs.pending++;
+      else if (newStatus === 'Teklif Verildi') globalKPIs.proposal++;
+      else if (newStatus === 'Satış Yapıldı') globalKPIs.won++;
+      else if (newStatus === 'Randevu Alındı') globalKPIs.callback++;
 
       // Anlık görsel tepki ver
       updateOutcomeTicks(lead.status);
 
       saveData();
       renderTable();
-      updateKPIs();
+      renderKPIDisplay();
+
+      // Seri Arama: Otomatik Sonrakine Geçiş
+      const autoAdvance = document.getElementById('modal-auto-advance')?.checked;
+      if (autoAdvance || fromKeyboard) {
+        setTimeout(() => {
+          modalNext();
+        }, 120);
+      }
     }
 
     function updateOutcomeTicks(currentStatus) {
