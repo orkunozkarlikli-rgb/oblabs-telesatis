@@ -15,12 +15,9 @@
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     
-    /* Data Hırsızlığına Karşı Güvenlik Koruması */
-    body {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
+    /* Mobil Dokunmatik Akıcılık */
+    button, a, tr {
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
@@ -208,10 +205,11 @@
         </div>
       </div>
 
-      <!-- LEADS TABLE VIEW -->
+      <!-- LEADS VIEW (Masaüstünde Tablo, Mobilde Dokunmatik Kartlar) -->
       <div class="bg-slate-900/70 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col flex-1">
         
-        <div class="overflow-x-auto flex-1">
+        <!-- MASAÜSTÜ TABLO GÖRÜNÜMÜ -->
+        <div class="overflow-x-auto flex-1 hidden md:block">
           <table class="w-full text-left text-sm text-slate-300">
             <thead class="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
               <tr>
@@ -228,6 +226,11 @@
               <!-- JS rendered rows -->
             </tbody>
           </table>
+        </div>
+
+        <!-- MOBİL DOKUNMATİK KARTLAR GÖRÜNÜMÜ (Maksimum Mobil Ergonomi) -->
+        <div id="mobile-cards-body" class="md:hidden flex-1 p-3 space-y-2.5 overflow-y-auto">
+          <!-- JS rendered mobile cards -->
         </div>
 
         <!-- EMPTY STATE -->
@@ -257,9 +260,9 @@
 
     </main>
 
-    <!-- ================= KOMPAKT ÇAĞRI MODALI ================= -->
-    <div id="call-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 sm:p-6 shadow-2xl relative flex flex-col gap-4">
+    <!-- ================= KOMPAKT ÇAĞRI MODALI (MOBİL UYUMLU) ================= -->
+    <div id="call-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm hidden overflow-y-auto">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl relative flex flex-col gap-3.5 sm:gap-4 my-auto">
         
         <!-- Header Actions -->
         <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -318,6 +321,7 @@
         <div class="space-y-2">
           <div class="flex items-center justify-between text-[11px] text-slate-400">
             <span>Görüşme Sonucu (Kısayol: <span class="font-mono text-blue-400 font-bold">1 - 5</span>):</span>
+            <span id="modal-current-status" class="hidden">Durum: Aranacak</span>
             <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
               <input type="checkbox" id="modal-auto-advance" checked class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0">
               <span class="text-[10px] text-emerald-400 font-semibold">Seçince Hemen Sonrakine Geç</span>
@@ -938,10 +942,12 @@
 
     function renderTable() {
       const tbody = document.getElementById('table-body');
+      const mobileContainer = document.getElementById('mobile-cards-body');
       const emptyDiv = document.getElementById('table-empty');
 
       if (filteredList.length === 0) {
-        tbody.innerHTML = '';
+        if (tbody) tbody.innerHTML = '';
+        if (mobileContainer) mobileContainer.innerHTML = '';
         emptyDiv.classList.remove('hidden');
         document.getElementById('pagination-info').textContent = 'Kayıt yok';
         document.getElementById('btn-prev-page').disabled = true;
@@ -957,57 +963,115 @@
       const startIndex = (currentPage - 1) * PAGE_SIZE;
       const pageItems = filteredList.slice(startIndex, startIndex + PAGE_SIZE);
 
-      tbody.innerHTML = pageItems.map((item, idx) => {
-        const absoluteIndex = startIndex + idx;
+      // 1. MASAÜSTÜ TABLO SATIRLARI
+      if (tbody) {
+        tbody.innerHTML = pageItems.map((item, idx) => {
+          const absoluteIndex = startIndex + idx;
 
-        let statusClass = 'bg-slate-800 text-slate-300 border-slate-700';
-        if (item.status === 'Teklif Verildi') statusClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
-        if (item.status === 'Randevu Alındı') statusClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-        if (item.status === 'Satış Yapıldı') statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold';
-        if (item.status === 'İstemiyor') statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-        if (item.status === 'Cevapsız') statusClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+          let statusClass = 'bg-slate-800 text-slate-300 border-slate-700';
+          if (item.status === 'Teklif Verildi') statusClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
+          if (item.status === 'Randevu Alındı') statusClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+          if (item.status === 'Satış Yapıldı') statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold';
+          if (item.status === 'İstemiyor') statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+          if (item.status === 'Cevapsız') statusClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
 
-        return `
-          <tr onclick="openCallModal(${absoluteIndex})" class="hover:bg-slate-800/50 cursor-pointer transition group">
-            <td class="py-3 px-4 font-semibold text-white">
-              <div class="group-hover:text-blue-400 transition">${escapeHtml(item.name)}</div>
-              <div class="text-xs text-slate-400 font-normal flex items-center gap-1 mt-0.5">
-                <i data-lucide="map-pin" class="w-3 h-3 text-slate-500"></i>
-                <span>${escapeHtml(item.district || '')}, ${escapeHtml(item.city || 'İstanbul')}</span>
-                <span class="text-slate-600">&bull;</span>
-                <span class="text-rose-400 text-[10px] font-semibold bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">Web YOK</span>
+          return `
+            <tr onclick="openCallModal(${absoluteIndex})" class="hover:bg-slate-800/50 cursor-pointer transition group">
+              <td class="py-3 px-4 font-semibold text-white">
+                <div class="group-hover:text-blue-400 transition">${escapeHtml(item.name)}</div>
+                <div class="text-xs text-slate-400 font-normal flex items-center gap-1 mt-0.5">
+                  <i data-lucide="map-pin" class="w-3 h-3 text-slate-500"></i>
+                  <span>${escapeHtml(item.district || '')}, ${escapeHtml(item.city || 'İstanbul')}</span>
+                  <span class="text-slate-600">&bull;</span>
+                  <span class="text-rose-400 text-[10px] font-semibold bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">Web YOK</span>
+                </div>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 text-xs border border-slate-700">
+                  ${escapeHtml(item.category || 'Hizmet')}
+                </span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap text-xs font-semibold text-amber-400">
+                ★ ${item.rating || 4.5} <span class="text-slate-400 font-normal">(${item.reviews_count || 0})</span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="font-mono text-xs text-blue-400 font-semibold group-hover:underline">
+                  ${escapeHtml(item.phone || '-')}
+                </span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium border ${statusClass}">
+                  ${item.status || 'Aranacak'}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-400 max-w-xs truncate">
+                ${escapeHtml(item.notes || '-')}
+              </td>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                <button onclick="event.stopPropagation(); openCallModal(${absoluteIndex})" class="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 text-xs font-bold transition flex items-center gap-1.5 ml-auto">
+                  <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                  <span>Ara & Kart</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 2. MOBİL DOKUNMATİK KARTLAR (Maksimum Telefon Uyumu)
+      if (mobileContainer) {
+        mobileContainer.innerHTML = pageItems.map((item, idx) => {
+          const absoluteIndex = startIndex + idx;
+          let statusBadgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+          if (item.status === 'Teklif Verildi') statusBadgeClass = 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
+          if (item.status === 'Randevu Alındı') statusBadgeClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+          if (item.status === 'Satış Yapıldı') statusBadgeClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold';
+          if (item.status === 'İstemiyor') statusBadgeClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+          if (item.status === 'Cevapsız') statusBadgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+
+          const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
+
+          return `
+            <div onclick="openCallModal(${absoluteIndex})" class="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 shadow-md active:bg-slate-900 transition flex flex-col gap-3 cursor-pointer">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h3 class="text-sm font-bold text-white leading-snug">${escapeHtml(item.name)}</h3>
+                  <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-1">
+                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-500"></i>
+                    <span>${escapeHtml(item.district || '')}, ${escapeHtml(item.city || 'İstanbul')}</span>
+                    <span class="text-slate-600">&bull;</span>
+                    <span class="text-rose-400 font-semibold bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">Web YOK</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-medium border ${statusBadgeClass} shrink-0">
+                  ${item.status || 'Aranacak'}
+                </span>
               </div>
-            </td>
-            <td class="py-3 px-4 whitespace-nowrap">
-              <span class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 text-xs border border-slate-700">
-                ${escapeHtml(item.category || 'Hizmet')}
-              </span>
-            </td>
-            <td class="py-3 px-4 whitespace-nowrap text-xs font-semibold text-amber-400">
-              ★ ${item.rating || 4.5} <span class="text-slate-400 font-normal">(${item.reviews_count || 0})</span>
-            </td>
-            <td class="py-3 px-4 whitespace-nowrap">
-              <span class="font-mono text-xs text-blue-400 font-semibold group-hover:underline">
-                ${escapeHtml(item.phone || '-')}
-              </span>
-            </td>
-            <td class="py-3 px-4 whitespace-nowrap">
-              <span class="px-2 py-0.5 rounded-md text-xs font-medium border ${statusClass}">
-                ${item.status || 'Aranacak'}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-xs text-slate-400 max-w-xs truncate">
-              ${escapeHtml(item.notes || '-')}
-            </td>
-            <td class="py-3 px-4 text-right whitespace-nowrap">
-              <button onclick="event.stopPropagation(); openCallModal(${absoluteIndex})" class="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 text-xs font-bold transition flex items-center gap-1.5 ml-auto">
-                <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-                <span>Ara & Kart</span>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+
+              <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60">
+                <span class="px-2 py-0.5 rounded bg-slate-900 text-slate-300 text-[11px] border border-slate-800">
+                  ${escapeHtml(item.category || 'Hizmet')}
+                </span>
+                <span class="font-semibold text-amber-400 text-xs">
+                  ★ ${item.rating || 4.5} <span class="text-slate-400 font-normal">(${item.reviews_count || 0})</span>
+                </span>
+              </div>
+
+              <!-- Mobil Hızlı Aksiyon Butonları -->
+              <div class="grid grid-cols-2 gap-2 pt-1" onclick="event.stopPropagation()">
+                <a href="tel:${cleanPhone}" onclick="recordCall(currentUser)" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-900/20 active:opacity-90 transition">
+                  <i data-lucide="phone" class="w-4 h-4"></i>
+                  <span>Hemen Ara</span>
+                </a>
+                <button onclick="openCallModal(${absoluteIndex})" class="py-2.5 px-3 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 font-bold text-xs flex items-center justify-center gap-1.5 active:bg-blue-600 transition">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                  <span>Kartı Aç</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
 
       document.getElementById('pagination-info').textContent = `Toplam ${filteredList.length} firmadan ${startIndex + 1} - ${Math.min(startIndex + PAGE_SIZE, filteredList.length)} gösteriliyor`;
       document.getElementById('page-num-badge').textContent = currentPage;
@@ -1043,43 +1107,58 @@
       openCallModal(0);
     }
 
-    // MODAL İŞLEMLERİ
+    // MODAL İŞLEMLERİ (100% GÜVENLİ VE HIZLI)
     function openCallModal(index) {
       modalIndex = index;
       const lead = filteredList[modalIndex];
       if (!lead) return;
 
-      document.getElementById('modal-queue-pos').textContent = `Firma ${modalIndex + 1} / ${filteredList.length}`;
-      document.getElementById('modal-title').textContent = lead.name;
-      document.getElementById('modal-category').textContent = lead.category || 'Genel';
-      document.getElementById('modal-location').textContent = `${lead.district || ''}, ${lead.city || 'İstanbul'}`;
-      document.getElementById('modal-rating').textContent = `★ ${lead.rating || 4.5} (${lead.reviews_count || 0} Yorum)`;
-      document.getElementById('modal-address').textContent = lead.address || 'Adres bilgisi yok';
-      document.getElementById('modal-maps-link').href = lead.maps_url || '#';
+      const setEl = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      };
+
+      setEl('modal-queue-pos', `Firma ${modalIndex + 1} / ${filteredList.length}`);
+      setEl('modal-title', lead.name || 'İsimsiz Firma');
+      setEl('modal-category', lead.category || 'Genel');
+      setEl('modal-location', `${lead.district || ''}, ${lead.city || 'İstanbul'}`);
+      setEl('modal-rating', `★ ${lead.rating || 4.5} (${lead.reviews_count || 0} Yorum)`);
+      setEl('modal-address', lead.address || 'Adres bilgisi yok');
+
+      const mapsLink = document.getElementById('modal-maps-link');
+      if (mapsLink) mapsLink.href = lead.maps_url || '#';
 
       const cleanPhone = (lead.phone || '').replace(/[^0-9+]/g, '');
-      document.getElementById('modal-call-btn').href = `tel:${cleanPhone}`;
-      document.getElementById('modal-phone-text').textContent = lead.phone || 'Telefon Yok';
+      const callBtn = document.getElementById('modal-call-btn');
+      if (callBtn) callBtn.href = `tel:${cleanPhone}`;
+      setEl('modal-phone-text', lead.phone || 'Telefon Yok');
 
       // Test firması işareti
       const testBadge = document.getElementById('modal-test-badge');
-      if (lead._isTest) {
-        testBadge.classList.remove('hidden');
-        document.getElementById('modal-title').textContent = '🧪 TEST FİRMASI';
-      } else {
-        testBadge.classList.add('hidden');
+      if (testBadge) {
+        if (lead._isTest) {
+          testBadge.classList.remove('hidden');
+          setEl('modal-title', '🧪 TEST FİRMASI');
+        } else {
+          testBadge.classList.add('hidden');
+        }
       }
 
-      document.getElementById('modal-pitch-text').textContent = lead._isTest
-        ? '"TEST — Bu firma gerçek değil. Ara butonuna basarak sistemin telefonu açıp açmadığını test edebilirsiniz. Numara: 05434992467"'
-        : `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
+      const pitchEl = document.getElementById('modal-pitch-text');
+      if (pitchEl) {
+        pitchEl.textContent = lead._isTest
+          ? '"TEST — Bu firma gerçek değil. Ara butonuna basarak sistemin telefonu açıp açmadığını test edebilirsiniz. Numara: 05434992467"'
+          : `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
+      }
 
-      document.getElementById('modal-note-input').value = lead.notes || '';
+      const noteInput = document.getElementById('modal-note-input');
+      if (noteInput) noteInput.value = lead.notes || '';
 
       updateOutcomeTicks(lead.status || 'Aranacak');
 
-      document.getElementById('call-modal').classList.remove('hidden');
-      lucide.createIcons();
+      const modal = document.getElementById('call-modal');
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
     }
 
     function handleCallClick() {
@@ -1139,7 +1218,8 @@
     }
 
     function updateOutcomeTicks(currentStatus) {
-      document.getElementById('modal-current-status').textContent = `Durum: ${currentStatus}`;
+      const curStatusEl = document.getElementById('modal-current-status');
+      if (curStatusEl) curStatusEl.textContent = `Durum: ${currentStatus}`;
 
       const config = [
         { btnId: 'btn-out-teklif', tickId: 'tick-teklif', status: 'Teklif Verildi', color: '#6366f1' },
