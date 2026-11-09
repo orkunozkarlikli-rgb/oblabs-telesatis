@@ -158,6 +158,11 @@
         </div>
       </div>
 
+      <!-- KİŞİSEL İSTATİSTİK PANELİ -->
+      <div id="stats-panel" class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 shadow-lg">
+        <!-- JS ile doldurulur -->
+      </div>
+
       <!-- FILTER BAR -->
       <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 flex-1">
@@ -282,11 +287,14 @@
 
         <!-- BIG CALL BUTTON -->
         <div>
-          <a id="modal-call-btn" href="tel:" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-900/30 transition">
+          <a id="modal-call-btn" href="tel:" onclick="handleCallClick()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-900/30 transition">
             <i data-lucide="phone-outgoing" class="w-5 h-5"></i>
             <span id="modal-phone-text">05XX XXX XX XX</span>
             <span class="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded ml-2">ŞİMDİ ARA</span>
           </a>
+          <div id="modal-test-badge" class="hidden mt-2 text-center text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl py-2">
+            ⚠️ TEST FİRMASI — Numara: 05434992467 — Arama sayımına eklenir
+          </div>
         </div>
 
         <!-- PROMPTER / PITCH -->
@@ -414,6 +422,109 @@
       'mete': 'mete24635'
     };
 
+    // TEST FİRMASI — her zaman listenin başında göster
+    const TEST_LEAD = {
+      id: 'test_firma_001',
+      name: 'TEST FİRMASI',
+      district: 'Test İlçe',
+      city: 'Test Şehir',
+      category: 'Test Sektör',
+      phone: '05434992467',
+      rating: 5.0,
+      reviews_count: 99,
+      address: 'Test Mahallesi, Test Sokak No:1, Test',
+      website: '',
+      status: 'Aranacak',
+      notes: 'TEST — Bu firma gerçek değil, sistem testi için kullanılır.',
+      maps_url: '#',
+      _isTest: true
+    };
+
+    // KULLANICI İSTATİSTİKLERİ — localStorage'da her kullanıcı için ayrı tutulur
+    function getStatsKey(username) { return `oblabs_stats_${username}_v1`; }
+
+    function loadUserStats(username) {
+      try {
+        const raw = localStorage.getItem(getStatsKey(username));
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return { totalCalls: 0, todayCalls: 0, totalSales: 0, totalProposals: 0, totalAppointments: 0, lastDay: '' };
+    }
+
+    function saveUserStats(username, stats) {
+      try { localStorage.setItem(getStatsKey(username), JSON.stringify(stats)); } catch(e) {}
+    }
+
+    function resetDailyIfNeeded(stats) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (stats.lastDay !== today) { stats.todayCalls = 0; stats.lastDay = today; }
+      return stats;
+    }
+
+    function recordCall(username) {
+      let stats = loadUserStats(username);
+      stats = resetDailyIfNeeded(stats);
+      stats.totalCalls++;
+      stats.todayCalls++;
+      saveUserStats(username, stats);
+      renderStatsPanel(username);
+    }
+
+    function recalcStats(username) {
+      let stats = loadUserStats(username);
+      stats = resetDailyIfNeeded(stats);
+      // satış/teklif/randevu sayılarını allLeads'den hesapla
+      let sales = 0, proposals = 0, appts = 0;
+      allLeads.forEach(l => {
+        const s = l.status || '';
+        if (s === 'Satış Yapıldı') sales++;
+        else if (s === 'Teklif Verildi') proposals++;
+        else if (s === 'Randevu Alındı') appts++;
+      });
+      stats.totalSales = sales;
+      stats.totalProposals = proposals;
+      stats.totalAppointments = appts;
+      saveUserStats(username, stats);
+      return stats;
+    }
+
+    function renderStatsPanel(username) {
+      const panel = document.getElementById('stats-panel');
+      if (!panel) return;
+      let stats = recalcStats(username);
+      const rate = stats.totalCalls > 0 ? ((stats.totalSales / stats.totalCalls) * 100).toFixed(1) : '0.0';
+      panel.innerHTML = `
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i>
+          <span class="text-xs font-bold text-slate-200">Benim İstatistiklerim</span>
+          <span class="ml-auto text-[10px] text-slate-500">${username}</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-[10px] text-slate-400">Bugün Arama</div>
+            <div class="text-lg font-bold text-blue-400">${stats.todayCalls}</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-[10px] text-slate-400">Toplam Arama</div>
+            <div class="text-lg font-bold text-slate-200">${stats.totalCalls}</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-[10px] text-slate-400">Teklif Verilen</div>
+            <div class="text-lg font-bold text-indigo-400">${stats.totalProposals}</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-[10px] text-slate-400">Randevu</div>
+            <div class="text-lg font-bold text-cyan-400">${stats.totalAppointments}</div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-[10px] text-slate-400">🎉 Satış / Oran</div>
+            <div class="text-lg font-bold text-emerald-400">${stats.totalSales} <span class="text-xs text-slate-400">(${rate}%)</span></div>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
     function checkAuth() {
       const savedUser = localStorage.getItem(AUTH_KEY);
       if (savedUser && VALID_USERS[savedUser.toLowerCase()]) {
@@ -448,7 +559,10 @@
       }
     }
 
+    let currentUser = '';
+
     function showApp(username) {
+      currentUser = username;
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('app-container').classList.remove('hidden');
       document.getElementById('user-badge').textContent = username;
@@ -482,13 +596,20 @@
       // 1. Tüm verileri (statik havuz + Supabase) tek seferde eksiksiz yükle
       await loadAllDataUnified();
 
+      // Test firmasını her zaman en başa ekle (telefon var mı kontrol et)
+      const testExists = allLeads.find(l => l._isTest);
+      if (!testExists) allLeads.unshift({ ...TEST_LEAD });
+
       // 2. Tabloyu ve filtreleri tek seferde kesin net sayıyla oluştur
       populateDropdowns();
       applyFilters();
       lucide.createIcons();
       updateCountDisplay();
 
-      // 3. CANLI AKIŞ: Her 10 saniyede bir yeni eklenen varsa sessizce sayacı artır
+      // 3. İstatistik paneli
+      renderStatsPanel(currentUser);
+
+      // 4. CANLI AKIŞ: Her 10 saniyede bir yeni eklenen varsa sessizce sayacı artır
       setInterval(() => pollNewLiveLeads(), 10000);
     }
 
@@ -694,6 +815,9 @@
       const contacted = total - pending;
       const rate = contacted > 0 ? ((won / contacted) * 100).toFixed(1) : 0;
       document.getElementById('stat-rate').textContent = `${rate}%`;
+
+      // Kişisel istatistik panelini de güncelle
+      if (currentUser) renderStatsPanel(currentUser);
     }
 
     function renderTable() {
@@ -812,8 +936,18 @@
       document.getElementById('modal-call-btn').href = `tel:${cleanPhone}`;
       document.getElementById('modal-phone-text').textContent = lead.phone || 'Telefon Yok';
 
-      document.getElementById('modal-pitch-text').textContent = 
-        `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
+      // Test firması işareti
+      const testBadge = document.getElementById('modal-test-badge');
+      if (lead._isTest) {
+        testBadge.classList.remove('hidden');
+        document.getElementById('modal-title').textContent = '🧪 TEST FİRMASI';
+      } else {
+        testBadge.classList.add('hidden');
+      }
+
+      document.getElementById('modal-pitch-text').textContent = lead._isTest
+        ? '"TEST — Bu firma gerçek değil. Ara butonuna basarak sistemin telefonu açıp açmadığını test edebilirsiniz. Numara: 05434992467"'
+        : `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
 
       document.getElementById('modal-note-input').value = lead.notes || '';
 
@@ -821,6 +955,20 @@
 
       document.getElementById('call-modal').classList.remove('hidden');
       lucide.createIcons();
+    }
+
+    function handleCallClick() {
+      // Arama sayısını kaydet
+      recordCall(currentUser);
+      // Durumu otomatik olarak "Cevapsız" yap (kullanıcı sonucu kendisi günceller)
+      const lead = filteredList[modalIndex];
+      if (lead && (!lead.status || lead.status === 'Aranacak')) {
+        lead.status = 'Cevapsız';
+        updateOutcomeTicks('Cevapsız');
+        saveData();
+        renderTable();
+        updateKPIs();
+      }
     }
 
     function closeCallModal() {
@@ -927,7 +1075,7 @@
     }
 
     function forceSyncLatestData() {
-      fetchApiStats().then(() => {
+      pollNewLiveLeads().then(() => {
         const count = allLeads.length;
         alert(count.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncel!');
       });
