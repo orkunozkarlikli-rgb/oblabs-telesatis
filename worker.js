@@ -136,8 +136,18 @@ export default {
       }
     }
 
-    // 5. Statik Portal Varlıklarını Sun
-    return env.ASSETS.fetch(request);
+    // 5. Statik Portal Varlıklarını Sun (Büyük JSON dosyaları için agresif tarayıcı önbellekleme)
+    const assetRes = await env.ASSETS.fetch(request);
+    if (url.pathname.includes('/leads_') && url.pathname.endsWith('.json')) {
+      const newHeaders = new Headers(assetRes.headers);
+      newHeaders.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+      return new Response(assetRes.body, {
+        status: assetRes.status,
+        statusText: assetRes.statusText,
+        headers: newHeaders
+      });
+    }
+    return assetRes;
   },
 
   // ---- GÜNLÜK CRON (Her gece 02:00 UTC = 05:00 TR) ----

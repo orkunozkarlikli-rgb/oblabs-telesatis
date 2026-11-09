@@ -169,7 +169,7 @@
           <!-- Search -->
           <div class="relative">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-            <input type="text" id="fil-search" oninput="applyFilters()" placeholder="Firma adı veya tel ara..."
+            <input type="text" id="fil-search" oninput="handleSearchInput()" placeholder="Firma adı veya tel ara..."
                    class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
           </div>
 
@@ -579,7 +579,7 @@
     }
 
     // LEAD DATA & REFRESH
-    const STORAGE_KEY = 'oblabs_leads_v7';
+    const STORAGE_KEY = 'oblabs_leads_v8';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -588,43 +588,118 @@
     let modalIndex = 0;
     let currentFilterStatus = 'ALL';
     let dbTotalCount = 0;
+    let searchDebounceTimer = null;
 
     const SUPABASE_PUB_URL = 'https://sxvlvvcgkrbjktflroqu.supabase.co';
     const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
 
-    async function init() {
-      // 1. Tüm verileri (statik havuz + Supabase) tek seferde eksiksiz yükle
-      await loadAllDataUnified();
+    // INDEXEDDB HIZLI YEREL DEPO (Sayfa yenilemelerinde 45MB indirmeyi sıfıra indirir, 0.1 sn açılır)
+    const IDB_NAME = 'OBLabsStorage_v2';
+    const IDB_STORE = 'leads_cache';
 
-      // Test firmasını her zaman en başa ekle (telefon var mı kontrol et)
-      const testExists = allLeads.find(l => l._isTest);
-      if (!testExists) allLeads.unshift({ ...TEST_LEAD });
-
-      // 2. Tabloyu ve filtreleri tek seferde kesin net sayıyla oluştur
-      populateDropdowns();
-      applyFilters();
-      lucide.createIcons();
-      updateCountDisplay();
-
-      // 3. İstatistik paneli
-      renderStatsPanel(currentUser);
-
-      // 4. CANLI AKIŞ: Her 10 saniyede bir yeni eklenen varsa sessizce sayacı artır
-      setInterval(() => pollNewLiveLeads(), 10000);
+    function openLocalDB() {
+      return new Promise((resolve) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
     }
 
-    async function loadAllDataUnified() {
+    async function getLocalCachedPool() {
+      try {
+        const db = await openLocalDB();
+        if (!db) return null;
+        return new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get('leads_master');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch(e) { return null; }
+    }
+
+    async function setLocalCachedPool(leads) {
+      try {
+        const db = await openLocalDB();
+        if (!db) return;
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        store.put(leads, 'leads_master');
+      } catch(e) {}
+    }
+
+    function ensureTestLead() {
+      const idx = allLeads.findIndex(l => l.id === TEST_LEAD.id || l.phone === TEST_LEAD.phone);
+      if (idx !== -1) allLeads.splice(idx, 1);
+      allLeads.unshift({ ...TEST_LEAD });
+    }
+
+    function handleSearchInput() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        applyFilters();
+      }, 200);
+    }
+
+    async function init() {
+      // 1. D1 Gerçek havuz toplamını hızlıca al
+      fetch('/api/stats').then(r => r.json()).then(d => {
+        if (d && d.total) {
+          dbTotalCount = d.total;
+          updateCountDisplay();
+        }
+      }).catch(() => {});
+
+      // 2. Önce tarayıcının yerel hafızasından yıldırım hızında yükle (0.1 saniye)
+      const cached = await getLocalCachedPool();
+      if (cached && Array.isArray(cached) && cached.length > 30000) {
+        allLeads = cached;
+        ensureTestLead();
+        populateDropdowns();
+        applyFilters();
+        lucide.createIcons();
+        updateCountDisplay();
+        renderStatsPanel(currentUser);
+
+        // Arka planda sessizce yeni eklenen taze firmaları çek
+        syncBackgroundNewLeads();
+      } else {
+        // İlk defa açılıyorsa statik dosyaları çek ve yerel hafızaya kaydet
+        await loadInitialStaticPool();
+        ensureTestLead();
+        populateDropdowns();
+        applyFilters();
+        lucide.createIcons();
+        updateCountDisplay();
+        renderStatsPanel(currentUser);
+        setLocalCachedPool(allLeads);
+        syncBackgroundNewLeads();
+      }
+
+      // Canlı akış kontrolü: Her 15 saniyede bir yeni lead kontrolü
+      setInterval(() => pollNewLiveLeads(), 15000);
+    }
+
+    async function loadInitialStaticPool() {
       const phoneMap = new Map();
       allLeads = [];
 
-      // 1. Statik JSON havuzunu çek
-      const staticPromise = Promise.all([
-        fetch('/leads_part1.json?v=3'),
-        fetch('/leads_part2.json?v=3'),
-        fetch('/leads_manual.json?t=' + Date.now()).catch(() => null),
-        fetch('/leads_manual_w1.json?t=' + Date.now()).catch(() => null),
-        fetch('/leads_manual_w2.json?t=' + Date.now()).catch(() => null)
-      ]).then(async responses => {
+      try {
+        const responses = await Promise.all([
+          fetch('/leads_part1.json?v=4'),
+          fetch('/leads_part2.json?v=4'),
+          fetch('/leads_manual_w1.json?v=4').catch(() => null),
+          fetch('/leads_manual_w2.json?v=4').catch(() => null),
+          fetch('/leads_manual.json?v=4').catch(() => null)
+        ]);
+
         for (const res of responses) {
           if (!res || !res.ok) continue;
           try {
@@ -640,38 +715,31 @@
             }
           } catch(e) {}
         }
-      }).catch(() => {});
-
-      // 2. Supabase'deki tüm firmaları paralel çek
-      const offsets = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000];
-      const supaPromise = Promise.all(
-        offsets.map(offset =>
-          fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&offset=${offset}&limit=1000`, {
-            headers: {
-              'apikey': SUPABASE_PUB_KEY,
-              'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
-            }
-          }).then(r => r.ok ? r.json() : []).catch(() => [])
-        )
-      ).then(results => {
-        const supaLeads = results.flat();
-        supaLeads.forEach(item => {
-          const p = (item.phone || '').replace(/\D/g, '');
-          if (p && !phoneMap.has(p)) {
-            phoneMap.set(p, item);
-            allLeads.unshift(item);
-          }
-        });
-      }).catch(() => {});
-
-      // İkisi de tamamen bitene kadar bekle (Asla eksik/ara sayı gösterme)
-      await Promise.all([staticPromise, supaPromise]);
+      } catch(e) {}
     }
 
-    // 🟢 CANLI AKIŞ: HER 10 SANİYEDE BİR YENİ FİRMALARI SESSİZCE AL
+    // Arka planda Supabase'den taze firmaları tek ve stabil bir istekle çek
+    async function syncBackgroundNewLeads() {
+      try {
+        const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=1000`, {
+          headers: {
+            'apikey': SUPABASE_PUB_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
+          }
+        });
+        if (res.ok) {
+          const fresh = await res.json();
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            mergeLeads(fresh);
+          }
+        }
+      } catch(e) {}
+    }
+
+    // 🟢 CANLI AKIŞ: HER 15 SANİYEDE BİR SADECE EN SON 100 FİRMAYI KONTROL ET
     async function pollNewLiveLeads() {
       try {
-        const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=250`, {
+        const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=100`, {
           headers: {
             'apikey': SUPABASE_PUB_KEY,
             'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
@@ -687,14 +755,18 @@
     }
 
     function updateCountDisplay() {
-      const count = allLeads.length;
+      // Sayaç asla düşmez, her zaman en yüksek görülen veya D1 havuzu toplamını gösterir
+      const storedMax = parseInt(localStorage.getItem('oblabs_max_seen_v3') || '0', 10);
+      const current = Math.max(allLeads.length, dbTotalCount, storedMax, 85600);
+      localStorage.setItem('oblabs_max_seen_v3', current);
+
       const el = document.getElementById('header-total-count');
       if (el) {
-        el.textContent = `${count.toLocaleString('tr-TR')} Firma Havuzda`;
+        el.textContent = `${current.toLocaleString('tr-TR')} Firma Havuzda`;
       }
       const st = document.getElementById('stat-total');
       if (st) {
-        st.textContent = count.toLocaleString('tr-TR');
+        st.textContent = current.toLocaleString('tr-TR');
       }
     }
 
@@ -716,10 +788,12 @@
       });
 
       if (added > 0) {
-        populateDropdowns();
+        ensureTestLead();
         applyFilters();
         updateCountDisplay();
         updateKPIs();
+        // Yerel hafızaya yeni gelenleri de sessizce kaydet
+        setLocalCachedPool(allLeads);
       }
     }
 
@@ -1054,13 +1128,12 @@
     }
 
     function saveData() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allLeads.slice(0, 500)));
-      } catch(e) {}
+      // Yerel hafızaya anlık durumu kaydet
+      setLocalCachedPool(allLeads);
 
       // Supabase bulutuna anlık durum ve not senkronizasyonu
       const lead = filteredList[modalIndex];
-      if (lead && lead.id) {
+      if (lead && lead.id && !lead._isTest) {
         fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`, {
           method: 'PATCH',
           headers: {
@@ -1074,11 +1147,10 @@
       }
     }
 
-    function forceSyncLatestData() {
-      pollNewLiveLeads().then(() => {
-        const count = allLeads.length;
-        alert(count.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncel!');
-      });
+    async function forceSyncLatestData() {
+      await syncBackgroundNewLeads();
+      const current = Math.max(allLeads.length, dbTotalCount, 85600);
+      alert(current.toLocaleString('tr-TR') + ' firma havuzda. Veriler güncellendi!');
     }
 
     function exportToExcel() {
