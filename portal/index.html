@@ -95,6 +95,13 @@
           </div>
         </div>
 
+        <!-- Bugünkü Süre Sayaç -->
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono shadow-inner">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span class="text-slate-400 hidden sm:inline">Bugünkü Süre:</span>
+          <span id="timer-display" class="font-bold text-slate-100">00:00:00</span>
+        </div>
+
         <!-- Action Buttons & User Menu -->
         <div class="flex items-center gap-2 sm:gap-2.5">
           <!-- Hızlı Sayfa Geçişleri -->
@@ -635,33 +642,58 @@
 
       init();
       startHeartbeatTracker();
+      setTimeout(function() { if (window.lucide) lucide.createIcons(); }, 50);
     }
 
-    let onlineDurationSec = 0;
-    let heartbeatTimer = null;
+    let sessionSeconds = 0;
+    let timerInterval = null;
+
     function startHeartbeatTracker() {
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
-      heartbeatTimer = setInterval(function() {
+      if (timerInterval) clearInterval(timerInterval);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const timerKey = 'oblabs_timer_' + (currentUser || 'guest') + '_' + today;
+      sessionSeconds = parseInt(localStorage.getItem(timerKey) || '0', 10);
+
+      updateIndexTimerDisplay();
+
+      timerInterval = setInterval(function() {
         if (!currentUser) return;
-        onlineDurationSec += 15;
-        if (onlineDurationSec % 30 === 0) {
-          try {
-            const statsKey = 'oblabs_stats_' + currentUser + '_v1';
-            const stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
-            fetch('/api/activity/heartbeat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                username: currentUser,
-                todayOnlineSec: onlineDurationSec,
-                todayCallClicks: stats.todayCalls || 0,
-                todayOutcomes: stats.outcomes || {},
-                lastAction: 'Data Havuzu Ekranında'
-              })
-            }).catch(function(){});
-          } catch (e) {}
+        sessionSeconds++;
+        localStorage.setItem(timerKey, sessionSeconds);
+        updateIndexTimerDisplay();
+
+        if (sessionSeconds % 30 === 0) {
+          sendIndexHeartbeat();
         }
-      }, 15000);
+      }, 1000);
+    }
+
+    function updateIndexTimerDisplay() {
+      const h = String(Math.floor(sessionSeconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((sessionSeconds % 3600) / 60)).padStart(2, '0');
+      const s = String(sessionSeconds % 60).padStart(2, '0');
+      const el = document.getElementById('timer-display');
+      if (el) el.textContent = h + ':' + m + ':' + s;
+    }
+
+    function sendIndexHeartbeat() {
+      if (!currentUser) return;
+      try {
+        const statsKey = 'oblabs_stats_' + currentUser + '_v1';
+        const stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
+        fetch('/api/activity/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: currentUser,
+            todayOnlineSec: sessionSeconds,
+            todayCallClicks: stats.todayCalls || 0,
+            todayOutcomes: stats.outcomes || {},
+            lastAction: 'Data Havuzu Ekranında'
+          })
+        }).catch(function(){});
+      } catch (e) {}
     }
 
     // LEAD DATA & REFRESH

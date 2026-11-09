@@ -111,16 +111,16 @@
 
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400">Temsilci Adınız:</span>
-            <input id="agent-name-input" type="text" value="Mete" placeholder="Adınız" 
+            <input id="agent-name-input" type="text" value="Kendi İsminiz" placeholder="Kendi İsminiz" 
                    oninput="updateScriptAgentName(this.value)"
-                   class="text-xs font-semibold px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-blue-400 w-28 focus:border-blue-500 outline-none">
+                   class="text-xs font-semibold px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-blue-400 w-36 focus:border-blue-500 outline-none">
           </div>
         </div>
 
         <!-- Teleprompter Metni -->
         <div id="teleprompter-text" class="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-sm sm:text-base leading-relaxed text-slate-200 font-medium space-y-3">
           <p>
-            "Merhaba, iyi günler. Ben <span class="agent-name-slot text-blue-400 font-bold underline decoration-blue-500/50">Mete</span>, <span class="text-white font-bold">OB Labs</span> firmasından arıyorum. İşletmelere özel profesyonel web siteleri hazırlıyoruz."
+            "Merhaba, iyi günler. Ben <span class="agent-name-slot text-blue-400 font-bold underline decoration-blue-500/50">Kendi İsminiz</span>, <span class="text-white font-bold">OB Labs</span> firmasından arıyorum. İşletmelere özel profesyonel web siteleri hazırlıyoruz."
           </p>
           <p>
             "İşletmenizin şu anda internette aktif bir web sitesi olmadığını gördük. Potansiyel müşterilerinizin size daha kolay ulaşmasını ve işletmenizin Google'da görünür olmasını sağlayacak çözümlerimiz hakkında bilgi vermek için ulaştım."
@@ -610,7 +610,7 @@
     lucide.createIcons();
 
     function updateScriptAgentName(val) {
-      const name = val.trim() || 'Mete';
+      const name = val.trim() || 'Kendi İsminiz';
       document.querySelectorAll('.agent-name-slot').forEach(el => el.textContent = name);
     }
 

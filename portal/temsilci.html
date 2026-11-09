@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OB Labs — Temsilci Çalışma Paneli</title>
+  <title>OB Labs — Temsilci Çalışma & Not Paneli</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -51,9 +51,9 @@
       </div>
 
       <!-- Orta: Aktif Süre Sayaç -->
-      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono">
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono">
         <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
-        <span class="text-slate-400">Bugünkü Süre:</span>
+        <span class="text-slate-400 hidden sm:inline">Bugünkü Süre:</span>
         <span id="timer-display" class="font-bold text-slate-100">00:00:00</span>
       </div>
 
@@ -65,7 +65,7 @@
         </a>
         <a href="index.html" class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
           <i data-lucide="database" class="w-3.5 h-3.5 text-slate-400"></i>
-          <span class="hidden sm:inline">Data Ekranı</span>
+          <span>Data Ekranı</span>
         </a>
         <button onclick="handleLogout()" title="Oturumu Kapat" class="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -77,14 +77,14 @@
   <!-- Ana İçerik -->
   <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-    <!-- 1. KULLANICININ YÜKLEDİĞİ GÖRSELİN BİREBİR AYNISI: "Benim İstatistiklerim" -->
+    <!-- 1. KULLANICININ İSTATİSTİKLERİ -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i>
           <span class="text-sm font-bold text-slate-200">Benim İstatistiklerim</span>
         </div>
-        <span id="stat-username" class="text-xs font-mono text-slate-500">oblabs-admin</span>
+        <span id="stat-username" class="text-xs font-mono text-slate-400 uppercase font-semibold">Temsilci</span>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
@@ -111,171 +111,116 @@
       </div>
     </section>
 
-    <!-- 2. ÇALIŞMA ALANI: ARAMA KARTI VE CANLI KONUŞMA ASİSTANI -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 2. GÜNLÜK ÇALIŞMA & TAKİP NOTLARI ALANI (GÜN GÜN SEÇİLEBİLİR) -->
+    <section class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
+      
+      <!-- Üst Bar: Gün Seçimi & Tarih Başlığı -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-blue-400"></i>
+            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">Günlük Çalışma & Takip Notlarım</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Kendinize ait görüşme detayları, geri aranacak müşteriler ve günlük hatırlatmalar</p>
+        </div>
 
-      <!-- Sol: Aktif Arama & Görüşme Kartı (2 Kolon) -->
-      <div class="lg:col-span-2 space-y-4">
-        
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <!-- Hızlı Tarih Butonları -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="selectDateOffset(0)" id="btn-date-today"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-500/20 transition">
+            Bugün
+          </button>
+          <button type="button" onclick="selectDateOffset(-1)" id="btn-date-yesterday"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Dün
+          </button>
+          <button type="button" onclick="selectDateOffset(-2)" id="btn-date-prev"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Önceki Gün
+          </button>
           
-          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/80">
-            <div class="flex items-center gap-2">
-              <span class="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/20">
-                Sıradaki Arama
-              </span>
-              <span id="lead-category" class="text-xs text-slate-400 font-medium truncate max-w-[200px]">
-                Güzellik, Kuaför & Bakım
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="skipToNextLead()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700 flex items-center gap-1">
-                <span>Sonraki</span>
-                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Firma Bilgileri -->
-          <div class="mb-6">
-            <h1 id="lead-name" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-              ALP YAPI DEKORASYON
-            </h1>
-            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-3">
-              <span class="flex items-center gap-1">
-                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-400"></i>
-                <span id="lead-location">Pendik / İstanbul</span>
-              </span>
-              <span class="flex items-center gap-1">
-                <i data-lucide="globe-2" class="w-3.5 h-3.5 text-rose-400"></i>
-                <span class="text-rose-400 font-semibold">Web Sitesi Yok</span>
-              </span>
-            </div>
-            <p id="lead-address" class="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800/80 font-mono">
-              YENİ MAH. SÜREYYA PAŞA CAD. BANKACILAR SİTESİ NO: 34 / A, Pendik / İstanbul
-            </p>
-          </div>
-
-          <!-- BÜYÜK ARA BUTONU -->
-          <div class="mb-6">
-            <a id="btn-call-action" href="tel:02164913102" onclick="handleCallClick()"
-               class="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-600/25 transition transform active:scale-[0.98]">
-              <i data-lucide="phone-outgoing" class="w-6 h-6 animate-pulse"></i>
-              <span id="call-phone-text">HEMEN ARA: 0216 491 31 02</span>
-            </a>
-          </div>
-
-          <!-- GÖRÜŞME SONUCU SEÇİMİ -->
-          <div>
-            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              Görüşme Sonucu & Not
-            </label>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-              <button onclick="selectOutcome('Teklif')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-blue-500 text-xs font-semibold text-slate-200 transition text-center" data-val="Teklif">
-                📋 Teklif
-              </button>
-              <button onclick="selectOutcome('Randevu')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-purple-500 text-xs font-semibold text-slate-200 transition text-center" data-val="Randevu">
-                📅 Randevu
-              </button>
-              <button onclick="selectOutcome('Cevapsız')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-600 text-xs font-semibold text-slate-200 transition text-center" data-val="Cevapsız">
-                📵 Cevapsız
-              </button>
-              <button onclick="selectOutcome('İstemiyor')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-rose-500 text-xs font-semibold text-slate-200 transition text-center" data-val="İstemiyor">
-                ❌ İstemiyor
-              </button>
-              <button onclick="selectOutcome('Satış')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-emerald-500 text-xs font-semibold text-emerald-400 transition text-center" data-val="Satış">
-                🎉 Satış!
-              </button>
-            </div>
-
-            <textarea id="call-notes-input" rows="2" placeholder="Görüşme notları (Müşteri ne dedi, WhatsApp'tan ne iletildi?)..."
-                      class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-blue-500 outline-none resize-none mb-3"></textarea>
-
-            <button onclick="saveCallAndNext()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2">
-              <i data-lucide="check" class="w-4 h-4"></i>
-              <span>Kaydet ve Sonraki Firmaya Geç</span>
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- Sağ: Canlı Arama Asistanı & Hızlı İtirazlar (1 Kolon) -->
-      <div class="space-y-4">
-        
-        <!-- Hızlı Konuşma Kartı -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-lg">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
-              <span class="text-xs font-bold text-white uppercase tracking-wider">Açılış Metni</span>
-            </div>
-            <a href="egitim.html" target="_blank" class="text-[11px] text-blue-400 hover:underline">Tam Eğitim →</a>
-          </div>
-
-          <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-200 leading-relaxed font-medium">
-            "Merhaba, iyi günler. Ben <span class="text-blue-400 font-bold" id="script-rep-name">Mete</span>, <strong>OB Labs</strong> firmasından arıyorum. İşletmenizin internette aktif web sitesi olmadığını gördük. 15.000 TL + KDV'ye domain, hosting ve SEO dahil profesyonel web sitesi hazırlıyoruz. İşletmeniz için böyle bir web sitesi düşünür müsünüz?"
-          </div>
-
-          <div class="mt-4 pt-3 border-t border-slate-800">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Hızlı İtiraz Cevapları:</span>
-            
-            <div class="space-y-2 text-xs">
-              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
-                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
-                  <span>💰 "Fiyat yüksek"</span>
-                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
-                </summary>
-                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
-                  "Yalnızca tasarım değil; domain, hızlı hosting ve SEO da pakete dahil. İlk yıl hiçbir ekstra masrafınız olmuyor."
-                </p>
-              </details>
-
-              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
-                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
-                  <span>📸 "Instagram'ımız var"</span>
-                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
-                </summary>
-                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
-                  "Instagram'ı tamamlayan bir platformdur. Sosyal medyada olmayan ve Google'da arayan müşteriler de size ulaşır, güvenilirlik sağlar."
-                </p>
-              </details>
-
-              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
-                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
-                  <span>🤔 "Düşüneyim"</span>
-                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
-                </summary>
-                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
-                  "Çok normal. Detayları ve örnekleri hemen WhatsApp'tan ileteyim, inceledikten sonra değerlendirelim."
-                </p>
-              </details>
-
-              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
-                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
-                  <span>📉 "Bütçemiz yok"</span>
-                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
-                </summary>
-                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
-                  "Anlıyorum. Notlarımızı kaydedeyim, önümüzdeki ay uygun bir zamanda tekrar değerlendirelim."
-                </p>
-              </details>
-            </div>
+          <!-- Takvimden Başka Tarih Seçme -->
+          <div class="relative inline-flex items-center">
+            <input type="date" id="date-picker-input" onchange="handleDatePickerChange(this.value)"
+                   class="bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:border-blue-500 outline-none cursor-pointer">
           </div>
         </div>
-
       </div>
 
-    </div>
+      <!-- Seçili Gün Başlığı & Otomatik Kayıt Durumu -->
+      <div class="flex items-center justify-between bg-slate-950/70 border border-slate-800/80 rounded-2xl px-4 py-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span id="active-date-label" class="text-xs sm:text-sm font-bold text-white">9 Kasım 2026</span>
+          <span id="active-date-tag" class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-semibold">Bugün</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span id="save-status-indicator" class="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Kaydedildi</span>
+          </span>
+          <button onclick="saveDailyNoteManual()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+            Kaydet
+          </button>
+        </div>
+      </div>
+
+      <!-- Ana Not Defteri Alanı -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <i data-lucide="file-edit" class="w-4 h-4 text-purple-400"></i>
+            <span>Günün Serbest Not Defteri</span>
+          </label>
+          <button type="button" onclick="copyYesterdayNotesToToday()" id="btn-copy-yesterday"
+                  class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition">
+            <i data-lucide="copy" class="w-3 h-3"></i>
+            <span>Dünün notlarını bugüne kopyala</span>
+          </button>
+        </div>
+
+        <textarea id="daily-notes-textarea" rows="10" oninput="handleNotesInput()"
+                  placeholder="Bugün kimlerle görüştünüz, WhatsApp'tan hangi teklifler iletildi, yarın kimler geri aranacak? Buraya dilediğiniz gibi serbestçe not alabilirsiniz... (Yazdıklarınız otomatik olarak kaydedilir)"
+                  class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 leading-relaxed focus:border-blue-500 outline-none resize-y custom-scroll font-mono"></textarea>
+      </div>
+
+      <!-- Hızlı Takip / Geri Arama Maddeleri (Checklist) -->
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="list-todo" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs font-bold text-white uppercase tracking-wider">Hızlı Takip & Geri Arama Maddeleri</span>
+          </div>
+          <span id="task-count-label" class="text-[10px] text-slate-400">0 madde</span>
+        </div>
+
+        <!-- Yeni Madde Ekleme Formu -->
+        <form onsubmit="handleAddTask(event)" class="flex gap-2">
+          <input type="text" id="new-task-input" placeholder="Örn: 15:30'da Yılmaz Kuaför aranacak (Teklif WhatsApp'tan gitti)..."
+                 class="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-blue-500 outline-none">
+          <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl border border-slate-700 transition flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Ekle</span>
+          </button>
+        </form>
+
+        <!-- Madde Listesi -->
+        <div id="tasks-list-container" class="space-y-1.5 pt-2">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+
+    </section>
 
   </main>
 
   <script>
     lucide.createIcons();
 
-    const AUTH_KEY = 'oblabs_auth_user';
-    let currentUser = localStorage.getItem(AUTH_KEY) || '';
+    const AUTH_KEY_1 = 'oblabs_tele_auth_user_v2';
+    const AUTH_KEY_2 = 'oblabs_auth_user';
+    let currentUser = localStorage.getItem(AUTH_KEY_1) || localStorage.getItem(AUTH_KEY_2) || '';
 
     // Giriş Kontrolü
     if (!currentUser) {
@@ -297,7 +242,8 @@
       };
 
       if (VALID_USERS[u] && VALID_USERS[u].toLowerCase() === p) {
-        localStorage.setItem(AUTH_KEY, u);
+        localStorage.setItem(AUTH_KEY_1, u);
+        localStorage.setItem(AUTH_KEY_2, u);
         document.getElementById('login-modal').classList.add('hidden');
         initPanel(u);
       } else {
@@ -307,31 +253,35 @@
 
     function handleLogout() {
       if (confirm('Oturumu kapatmak istediğinize emin misiniz?')) {
-        localStorage.removeItem(AUTH_KEY);
+        localStorage.removeItem(AUTH_KEY_1);
+        localStorage.removeItem(AUTH_KEY_2);
         location.reload();
       }
     }
 
-    // Sayaç & Zaman Takibi
+    // Sayaç & Zaman Takibi (Data Ekranı ile tam senkronize)
     let sessionSeconds = 0;
     let timerInterval = null;
 
     function startSessionTimer() {
-      const today = new Date().toISOString().slice(0, 10);
-      const timerKey = `oblabs_timer_${currentUser}_${today}`;
+      const today = getIsoDate(0);
+      const timerKey = 'oblabs_timer_' + currentUser + '_' + today;
       sessionSeconds = parseInt(localStorage.getItem(timerKey) || '0', 10);
 
       updateTimerDisplay();
 
+      if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         sessionSeconds++;
         localStorage.setItem(timerKey, sessionSeconds);
         updateTimerDisplay();
+
+        if (sessionSeconds % 30 === 0) {
+          sendHeartbeat();
+        }
       }, 1000);
 
-      // Her 30 saniyede bir merkeze Heartbeat gönder (Yönetici panelinde görünmesi için)
-      setInterval(sendHeartbeat, 30000);
-      sendHeartbeat(); // ilk açılışta hemen gönder
+      sendHeartbeat();
     }
 
     function updateTimerDisplay() {
@@ -342,9 +292,9 @@
       if (el) el.textContent = `${hrs}:${mins}:${secs}`;
     }
 
-    // İstatistik Yükleme & Güncelleme
+    // İstatistik Yükleme
     function loadStats() {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = getIsoDate(0);
       const statsKey = `oblabs_stats_${currentUser}_v1`;
       let stats = { totalCalls: 0, todayCalls: 0, totalSales: 0, totalProposals: 0, totalAppointments: 0, lastDay: today };
 
@@ -369,120 +319,7 @@
       document.getElementById('stat-sales').innerHTML = `${sales} <span class="text-xs text-slate-400 font-normal">(${rate}%)</span>`;
     }
 
-    // Lead Havuzunu Yükleme
-    let leadPool = [];
-    let currentLeadIndex = 0;
-
-    async function loadLeads() {
-      try {
-        const res = await fetch('leads_manual.json?v=7');
-        if (res.ok) {
-          leadPool = await res.json();
-          renderCurrentLead();
-        }
-      } catch(e) {
-        console.error('Lead yüklenemedi:', e);
-      }
-    }
-
-    function renderCurrentLead() {
-      if (!leadPool.length) return;
-      const lead = leadPool[currentLeadIndex % leadPool.length];
-      if (!lead) return;
-
-      document.getElementById('lead-name').textContent = lead.name || 'İsimsiz Firma';
-      document.getElementById('lead-category').textContent = lead.category || 'Genel';
-      document.getElementById('lead-location').textContent = `${lead.district || ''} / ${lead.city || ''}`;
-      document.getElementById('lead-address').textContent = lead.address || 'Adres belirtilmemiş';
-      
-      const ph = lead.phone || '';
-      document.getElementById('btn-call-action').href = `tel:${ph}`;
-      document.getElementById('call-phone-text').textContent = `HEMEN ARA: ${ph}`;
-
-      // Reset outcome selection & notes
-      document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-950/40'));
-      document.getElementById('call-notes-input').value = '';
-      currentOutcome = '';
-    }
-
-    function skipToNextLead() {
-      currentLeadIndex++;
-      renderCurrentLead();
-    }
-
-    let currentOutcome = '';
-    function selectOutcome(val) {
-      currentOutcome = val;
-      document.querySelectorAll('.outcome-btn').forEach(b => {
-        if (b.dataset.val === val) {
-          b.classList.add('ring-2', 'ring-blue-500', 'bg-blue-950/40');
-        } else {
-          b.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-950/40');
-        }
-      });
-    }
-
-    // Arama Butonuna Tıklandığında Sayacı Artır & Log Gönder
-    function handleCallClick() {
-      const today = new Date().toISOString().slice(0, 10);
-      const statsKey = `oblabs_stats_${currentUser}_v1`;
-      let stats = { totalCalls: 0, todayCalls: 0, totalSales: 0, totalProposals: 0, totalAppointments: 0, lastDay: today };
-
-      try {
-        const raw = localStorage.getItem(statsKey);
-        if (raw) stats = JSON.parse(raw);
-      } catch(e) {}
-
-      stats.todayCalls++;
-      stats.totalCalls++;
-      localStorage.setItem(statsKey, JSON.stringify(stats));
-      loadStats();
-
-      // Log kaydı oluştur
-      const lead = leadPool[currentLeadIndex % leadPool.length] || {};
-      logActivity('call_click', lead.name, lead.phone, 'Arama Başlatıldı', '');
-    }
-
-    function saveCallAndNext() {
-      const lead = leadPool[currentLeadIndex % leadPool.length] || {};
-      const notes = document.getElementById('call-notes-input').value.trim();
-
-      if (currentOutcome) {
-        const statsKey = `oblabs_stats_${currentUser}_v1`;
-        let stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
-
-        if (currentOutcome === 'Satış') stats.totalSales = (stats.totalSales || 0) + 1;
-        if (currentOutcome === 'Teklif') stats.totalProposals = (stats.totalProposals || 0) + 1;
-        if (currentOutcome === 'Randevu') stats.totalAppointments = (stats.totalAppointments || 0) + 1;
-
-        localStorage.setItem(statsKey, JSON.stringify(stats));
-        loadStats();
-
-        logActivity('outcome_saved', lead.name, lead.phone, currentOutcome, notes);
-      }
-
-      skipToNextLead();
-    }
-
-    // Aktivite Loglama (Cloudflare KV'ye kaydeder)
-    async function logActivity(type, firmName, firmPhone, outcome, notes) {
-      try {
-        await fetch('/api/activity/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: currentUser,
-            type,
-            firmName,
-            firmPhone,
-            outcome,
-            notes
-          })
-        });
-      } catch(e) {}
-    }
-
-    // Heartbeat (Yöneticinin online süreleri görebilmesi için)
+    // Heartbeat
     async function sendHeartbeat() {
       if (!currentUser) return;
       try {
@@ -501,23 +338,240 @@
               proposals: stats.totalProposals || 0,
               appointments: stats.totalAppointments || 0
             },
-            lastAction: 'Arama Ekranında Aktif'
+            lastAction: 'Çalışan Not Panelinde'
           })
         });
       } catch(e) {}
+    }
+
+    // ================= GÜN GÜN NOT YÖNETİMİ =================
+    let activeDate = getIsoDate(0);
+    let autoSaveTimeout = null;
+
+    function getIsoDate(offsetDays = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDateTr(dStr) {
+      const parts = dStr.split('-');
+      if (parts.length !== 3) return dStr;
+      const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+      const mIdx = parseInt(parts[1], 10) - 1;
+      return `${parseInt(parts[2], 10)} ${months[mIdx] || ''} ${parts[0]}`;
+    }
+
+    function selectDateOffset(offset) {
+      activeDate = getIsoDate(offset);
+      document.getElementById('date-picker-input').value = activeDate;
+      updateActiveDateUI();
+      loadNotesForDate();
+    }
+
+    function handleDatePickerChange(val) {
+      if (!val) return;
+      activeDate = val;
+      updateActiveDateUI();
+      loadNotesForDate();
+    }
+
+    function updateActiveDateUI() {
+      const today = getIsoDate(0);
+      const yesterday = getIsoDate(-1);
+      const prev = getIsoDate(-2);
+
+      // Buton renkleri
+      const btnToday = document.getElementById('btn-date-today');
+      const btnYest = document.getElementById('btn-date-yesterday');
+      const btnPrev = document.getElementById('btn-date-prev');
+
+      [btnToday, btnYest, btnPrev].forEach(b => {
+        if (!b) return;
+        b.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+      });
+
+      const tagEl = document.getElementById('active-date-tag');
+      if (activeDate === today) {
+        if (btnToday) btnToday.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-500/20 transition';
+        if (tagEl) { tagEl.textContent = 'Bugün'; tagEl.className = 'text-[10px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-semibold'; }
+      } else if (activeDate === yesterday) {
+        if (btnYest) btnYest.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-500/20 transition';
+        if (tagEl) { tagEl.textContent = 'Dün'; tagEl.className = 'text-[10px] px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-400 font-semibold'; }
+      } else if (activeDate === prev) {
+        if (btnPrev) btnPrev.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-500/20 transition';
+        if (tagEl) { tagEl.textContent = 'Önceki Gün'; tagEl.className = 'text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-semibold'; }
+      } else {
+        if (tagEl) { tagEl.textContent = 'Geçmiş / Özel Tarih'; tagEl.className = 'text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-semibold'; }
+      }
+
+      const labelEl = document.getElementById('active-date-label');
+      if (labelEl) labelEl.textContent = formatDateTr(activeDate);
+
+      // Dünün notlarını kopyalama butonu sadece bugündeyken mantıklı
+      const copyBtn = document.getElementById('btn-copy-yesterday');
+      if (copyBtn) {
+        copyBtn.style.display = (activeDate === today) ? 'inline-flex' : 'none';
+      }
+    }
+
+    function loadNotesForDate() {
+      const noteKey = `oblabs_notes_${currentUser}_${activeDate}`;
+      const savedNote = localStorage.getItem(noteKey) || '';
+      document.getElementById('daily-notes-textarea').value = savedNote;
+
+      setSaveStatus('Yüklendi ✓', 'text-slate-400');
+      renderTasksList();
+    }
+
+    function handleNotesInput() {
+      setSaveStatus('Yazılıyor...', 'text-amber-400');
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        saveDailyNoteManual(false);
+      }, 600);
+    }
+
+    function saveDailyNoteManual(showToast = true) {
+      const noteKey = `oblabs_notes_${currentUser}_${activeDate}`;
+      const val = document.getElementById('daily-notes-textarea').value;
+      localStorage.setItem(noteKey, val);
+
+      setSaveStatus('Kaydedildi ✓', 'text-emerald-400');
+      if (showToast) {
+        // İsteğe bağlı görsel bildirim
+      }
+    }
+
+    function setSaveStatus(text, colorClass) {
+      const el = document.getElementById('save-status-indicator');
+      if (el) {
+        el.className = `text-[11px] font-medium flex items-center gap-1 ${colorClass}`;
+        el.innerHTML = text;
+      }
+    }
+
+    function copyYesterdayNotesToToday() {
+      const yesterday = getIsoDate(-1);
+      const yKey = `oblabs_notes_${currentUser}_${yesterday}`;
+      const yNotes = localStorage.getItem(yKey) || '';
+      
+      if (!yNotes.trim()) {
+        alert('Düne ait kayıtlı not bulunamadı.');
+        return;
+      }
+
+      const txt = document.getElementById('daily-notes-textarea');
+      if (txt.value.trim()) {
+        if (!confirm('Bugünkü mevcut notlarınızın altına dünün notları eklensin mi?')) return;
+        txt.value = txt.value.trim() + '\n\n--- Dünden Aktarılan Notlar ---\n' + yNotes;
+      } else {
+        txt.value = yNotes;
+      }
+      saveDailyNoteManual(true);
+    }
+
+    // ================= HIZLI TAKİP MADDELERİ (CHECKLIST) =================
+    function getTasksForActiveDate() {
+      const taskKey = `oblabs_tasks_${currentUser}_${activeDate}`;
+      try {
+        return JSON.parse(localStorage.getItem(taskKey) || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveTasksForActiveDate(tasks) {
+      const taskKey = `oblabs_tasks_${currentUser}_${activeDate}`;
+      localStorage.setItem(taskKey, JSON.stringify(tasks));
+      renderTasksList();
+    }
+
+    function handleAddTask(e) {
+      e.preventDefault();
+      const input = document.getElementById('new-task-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const tasks = getTasksForActiveDate();
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      tasks.unshift({
+        id: 't_' + Date.now(),
+        text: text,
+        time: timeStr,
+        done: false
+      });
+
+      saveTasksForActiveDate(tasks);
+      input.value = '';
+    }
+
+    function toggleTaskDone(idx) {
+      const tasks = getTasksForActiveDate();
+      if (tasks[idx]) {
+        tasks[idx].done = !tasks[idx].done;
+        saveTasksForActiveDate(tasks);
+      }
+    }
+
+    function deleteTask(idx) {
+      const tasks = getTasksForActiveDate();
+      tasks.splice(idx, 1);
+      saveTasksForActiveDate(tasks);
+    }
+
+    function renderTasksList() {
+      const tasks = getTasksForActiveDate();
+      const container = document.getElementById('tasks-list-container');
+      const countLabel = document.getElementById('task-count-label');
+
+      if (countLabel) countLabel.textContent = `${tasks.length} madde (${tasks.filter(t => t.done).length} tamamlandı)`;
+
+      if (!tasks.length) {
+        container.innerHTML = `
+          <div class="text-xs text-slate-500 italic py-3 text-center">
+            Bu tarihe ait hızlı takip maddesi bulunmuyor. Yukarıdan yeni madde ekleyebilirsiniz.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tasks.map((t, i) => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 transition hover:border-slate-700">
+          <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskDone(${i})"
+                   class="w-4 h-4 rounded text-blue-600 bg-slate-950 border-slate-700 focus:ring-0 cursor-pointer">
+            <span class="text-xs font-mono text-slate-400 shrink-0">${t.time || ''}</span>
+            <span class="text-xs text-slate-200 truncate ${t.done ? 'line-through text-slate-500' : ''}">${escapeHtml(t.text)}</span>
+          </label>
+          <button onclick="deleteTask(${i})" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg transition" title="Sil">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function initPanel(username) {
       currentUser = username;
       document.getElementById('stat-username').textContent = username;
       
-      const clean = username.charAt(0).toUpperCase() + username.slice(1);
-      const repEl = document.getElementById('script-rep-name');
-      if (repEl) repEl.textContent = clean;
-
       loadStats();
       startSessionTimer();
-      loadLeads();
+
+      document.getElementById('date-picker-input').value = activeDate;
+      updateActiveDateUI();
+      loadNotesForDate();
     }
   </script>
 </body>
