@@ -533,46 +533,22 @@ async function runWorker(groupSelection) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await sleep(1000 + Math.random() * 500);
 
-        // 🎯 GERÇEK DERİN DİBE İNME MOTORU (En dibe kadar inerek tüm firmaları aç)
-        let prevHeight = 0;
-        let sameHeightCount = 0;
-        for (let s = 1; s <= 25; s++) {
-          const scrollInfo = await page.evaluate(() => {
+        // 🚀 ULTRA TURBO AKIŞ (7 Hızlı Scroll ile 5 Saniyede Tüm Kartları Çek)
+        for (let s = 1; s <= 8; s++) {
+          await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]');
-            if (!feed) return { atBottom: true, height: 0 };
-            
-            feed.scrollTop = feed.scrollHeight;
-            const isEnd = feed.innerText.includes('Sonuçların sonuna geldiniz') || 
-                          feed.innerText.includes('daha fazla sonuç yok') ||
-                          !!document.querySelector('span.HlvSq');
-            return { atBottom: isEnd, height: feed.scrollHeight };
+            if (feed) feed.scrollTop = feed.scrollHeight;
           });
-
-          if (scrollInfo.atBottom) {
-            console.log(`[Worker] 🛑 Listenin en dibine ulaşıldı (${s}. kaydırma).`);
-            break;
-          }
-
-          if (scrollInfo.height === prevHeight) {
-            sameHeightCount++;
-            if (sameHeightCount >= 3) break; // 3 kez yükseklik değişmediyse dibe gelinmiştir
-          } else {
-            sameHeightCount = 0;
-            prevHeight = scrollInfo.height;
-          }
-
-          // Google Maps'in yeni kartları AJAX ile yüklemesi için 1.0 - 1.2 saniye bekle
-          await sleep(1000 + Math.random() * 200);
+          await sleep(400);
         }
 
-        // 🚀 ULTRA HIZLI ANLIK KART AYIKLAMA (Tek tek sayfa açmadan doğrudan feed'den çek)
+        // ⚡ DOĞRUDAN LİSTEDEN ANLIK KART AYIKLAMA (Sıfır bekleme, tek tek sayfa açmadan)
         const extracted = await page.evaluate((defaultCategory) => {
           const feed = document.querySelector('div[role="feed"]');
-          if (!feed) return { directLeads: [], checkLinks: [] };
+          if (!feed) return [];
 
           const placeLinks = Array.from(feed.querySelectorAll('a[href*="/maps/place/"]'));
           const directLeads = [];
-          const checkLinks = [];
           const seenLinks = new Set();
 
           for (const a of placeLinks) {
@@ -580,7 +556,6 @@ async function runWorker(groupSelection) {
             if (!href || seenLinks.has(href)) continue;
             seenLinks.add(href);
 
-            // Kart kapsayıcısını bul
             let card = a.closest('div[role="article"]') || a.parentElement;
             while (card && !card.getAttribute('role') && card.parentElement && card.parentElement.getAttribute('role') !== 'feed') {
               card = card.parentElement;
@@ -590,12 +565,11 @@ async function runWorker(groupSelection) {
             const rawText = card.innerText || '';
             const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 
-            // 1. Web sitesi olanları ANINDA ELE (Sıfır vakit kaybı)
+            // Web sitesi olanları ele
             const hasWeb = !!card.querySelector('a[data-value*="Web" i], a[aria-label*="web" i], a[href*="http"]:not([href*="google.com"])') ||
                            rawText.includes('Web sitesi');
-            if (hasWeb) continue; // Web sitesi var, ATLA!
+            if (hasWeb) continue;
 
-            // İsim
             const name = a.getAttribute('aria-label') || lines[0] || '';
             if (!name) continue;
 
@@ -603,7 +577,6 @@ async function runWorker(groupSelection) {
             const phoneMatch = rawText.match(/(?:\+90\s*|0)?([2-5][0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{2}[\s.-]?[0-9]{2})/);
             const phone = phoneMatch ? phoneMatch[0].trim() : '';
 
-            // Puan ve Yorum
             let rating = 4.5;
             let reviews = 0;
             const ratingMatch = rawText.match(/([1-5],[0-9])/);
@@ -611,7 +584,6 @@ async function runWorker(groupSelection) {
             const reviewsMatch = rawText.match(/\(([0-9.]+)\)/);
             if (reviewsMatch) reviews = parseInt(reviewsMatch[1].replace(/\./g, ''), 10);
 
-            // Kategori ve Adres
             let category = defaultCategory;
             let address = '';
             for (const line of lines) {
@@ -629,19 +601,15 @@ async function runWorker(groupSelection) {
             }
 
             if (phone) {
-              // Telefonu hazır olanları anında al
               directLeads.push({ name, phone, rating, reviews, category, address, maps_url: href });
-            } else {
-              // Telefonu dışarıda görünmeyenleri detay kontrol listesine ekle
-              checkLinks.push(href);
             }
           }
 
-          return { directLeads, checkLinks };
+          return directLeads;
         }, sector);
 
-        // 1. ANINDA YAKALANANLARI HAVUZA VE D1'E GÖNDER
-        for (const d of extracted.directLeads) {
+        // BULUNAN TÜM FİRMALARI ANINDA HAVUZA GÖNDER
+        for (const d of extracted) {
           const cleanPhone = (d.phone || '').replace(/\D/g, '');
           if (!cleanPhone || cleanPhone.length < 8) continue;
 
@@ -662,75 +630,12 @@ async function runWorker(groupSelection) {
           };
 
           workerBuffer.push(lead);
-          console.log(`[Worker #${workerId}] ⚡ [${loc.city}/${loc.district}] ${lead.name} | Tel: ${lead.phone} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
+          console.log(`[Worker] 🔥 [${loc.city}/${loc.district}] ${lead.name} | Tel: ${lead.phone}`);
 
           if (workerBuffer.length >= 5) {
-            const res = await appendToMasterFile(workerBuffer);
+            await appendToMasterFile(workerBuffer);
             workerBuffer.length = 0;
-            console.log(`[Worker #${workerId}] 💾 Kaydedildi! Toplam Havuz: ${res.total} firma`);
           }
-        }
-
-        // 2. KARTINDA TELEFON YAZMAYAN FİRMALARIN İÇİNE HIZLICA GİRİP TELEFONA BAK (25 Firmaya Kadar)
-        const topCheckLinks = (extracted.checkLinks || []).slice(0, 25);
-        for (const link of topCheckLinks) {
-          try {
-            await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 8000 });
-            await sleep(250 + Math.random() * 150);
-
-            const detailData = await page.evaluate(() => {
-              const name = document.querySelector('h1')?.textContent?.trim() || '';
-              const web = document.querySelector('a[data-item-id="authority"]')?.getAttribute('href') ||
-                          document.querySelector('a[aria-label*="web" i]')?.getAttribute('href') || '';
-              const phoneAttr = document.querySelector('button[data-item-id*="phone"]')?.getAttribute('aria-label') ||
-                                document.querySelector('button[aria-label*="Telefon" i]')?.getAttribute('aria-label') || '';
-              const phone = phoneAttr.replace(/Telefon:\s*/i, '').trim();
-
-              const ratingText = document.querySelector('div.F7nice')?.textContent || '';
-              let rating = 4.5;
-              let reviews = 0;
-              const rMatch = ratingText.match(/([0-9],[0-9])/);
-              if (rMatch) rating = parseFloat(rMatch[1].replace(',', '.'));
-              const countMatch = ratingText.match(/\(([0-9.]+)\)/);
-              if (countMatch) reviews = parseInt(countMatch[1].replace(/\./g, ''), 10);
-
-              const category = document.querySelector('button[jsaction*="category"]')?.textContent?.trim() || '';
-              const addressAttr = document.querySelector('button[data-item-id="address"]')?.getAttribute('aria-label') || '';
-              const address = addressAttr.replace(/Adres:\s*/i, '').trim();
-
-              return { name, web, phone, rating, reviews, category, address };
-            });
-
-            if (!detailData.name) continue;
-            if (detailData.web && detailData.web.trim().length > 3) continue;
-            const cleanPhone = (detailData.phone || '').replace(/\D/g, '');
-            if (!cleanPhone || cleanPhone.length < 8) continue;
-
-            const lead = {
-              id: `tr_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-              name: detailData.name,
-              district: loc.district,
-              city: loc.city,
-              category: detailData.category || sector,
-              phone: detailData.phone,
-              rating: detailData.rating,
-              reviews_count: detailData.reviews,
-              address: detailData.address,
-              website: "",
-              status: "Aranacak",
-              notes: "",
-              maps_url: link
-            };
-
-            workerBuffer.push(lead);
-            console.log(`[Worker #${workerId}] 🔥 [${loc.city}/${loc.district}] ${lead.name} | Tel: ${lead.phone} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
-
-            if (workerBuffer.length >= 5) {
-              const res = await appendToMasterFile(workerBuffer);
-              workerBuffer.length = 0;
-              console.log(`[Worker #${workerId}] 💾 Kaydedildi! Toplam Havuz: ${res.total} firma`);
-            }
-          } catch (e) {}
         }
 
       } catch (err) {

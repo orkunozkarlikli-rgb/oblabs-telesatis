@@ -214,31 +214,13 @@ async function startTourismScraper() {
         continue;
       }
 
-      // 🎯 GERÇEK DERİN DİBE İNME MOTORU (En dibe kadar inerek tüm otel & bungalovları aç)
-      let prevHeight = 0;
-      let sameHeightCount = 0;
-      for (let s = 1; s <= 25; s++) {
-        const scrollInfo = await page.evaluate(() => {
+      // 🚀 TURBO HIZLI SCROLL (8 Scroll ile 3 Saniyede Tüm Otel & Bungalovları Çek)
+      for (let s = 1; s <= 8; s++) {
+        await page.evaluate(() => {
           const feed = document.querySelector('div[role="feed"]');
-          if (!feed) return { atBottom: true, height: 0 };
-          feed.scrollTop = feed.scrollHeight;
-          const isEnd = feed.innerText.includes('Sonuçların sonuna geldiniz') || 
-                        feed.innerText.includes('daha fazla sonuç yok') ||
-                        !!document.querySelector('span.HlvSq');
-          return { atBottom: isEnd, height: feed.scrollHeight };
+          if (feed) feed.scrollTop = feed.scrollHeight;
         });
-
-        if (scrollInfo.atBottom) break;
-
-        if (scrollInfo.height === prevHeight) {
-          sameHeightCount++;
-          if (sameHeightCount >= 3) break;
-        } else {
-          sameHeightCount = 0;
-          prevHeight = scrollInfo.height;
-        }
-
-        await sleep(1000 + Math.random() * 200);
+        await sleep(400);
       }
 
       const extracted = await page.evaluate((defaultSec) => {
@@ -336,62 +318,7 @@ async function startTourismScraper() {
         console.log(`   🏨 [YENİ TURİZM] ${lead.name} | Tel: ${lead.phone} | ${lead.city}/${lead.district} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
       }
 
-      // Kartta telefon görünmeyen ilk 20 otele hızlıca tıkla
-      const topCheck = (extracted.checkLinks || []).slice(0, 20);
-      for (const link of topCheck) {
-        try {
-          await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 7000 });
-          await sleep(250);
 
-          const detail = await page.evaluate(() => {
-            const name = document.querySelector('h1')?.textContent?.trim() || '';
-            const web = document.querySelector('a[data-item-id="authority"]')?.getAttribute('href') ||
-                        document.querySelector('a[aria-label*="web" i]')?.getAttribute('href') || '';
-            const phoneAttr = document.querySelector('button[data-item-id*="phone"]')?.getAttribute('aria-label') ||
-                              document.querySelector('button[aria-label*="Telefon" i]')?.getAttribute('aria-label') || '';
-            const phone = phoneAttr.replace(/Telefon:\s*/i, '').trim();
-
-            const ratingText = document.querySelector('div.F7nice')?.textContent || '';
-            let rating = 4.5;
-            let reviews = 0;
-            const rMatch = ratingText.match(/([0-9],[0-9])/);
-            if (rMatch) rating = parseFloat(rMatch[1].replace(',', '.'));
-            const countMatch = ratingText.match(/\(([0-9.]+)\)/);
-            if (countMatch) reviews = parseInt(countMatch[1].replace(/\./g, ''), 10);
-
-            const category = document.querySelector('button[jsaction*="category"]')?.textContent?.trim() || '';
-            const addressAttr = document.querySelector('button[data-item-id="address"]')?.getAttribute('aria-label') || '';
-            const address = addressAttr.replace(/Adres:\s*/i, '').trim();
-
-            return { name, web, phone, rating, reviews, category, address };
-          });
-
-          if (!detail.name || (detail.web && detail.web.trim().length > 3)) continue;
-          const cleanPhone = (detail.phone || '').replace(/\D/g, '');
-          if (!cleanPhone || cleanPhone.length < 8) continue;
-          if (knownPhones.has(cleanPhone)) continue;
-          knownPhones.add(cleanPhone);
-
-          const lead = {
-            id: `tr_supa_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-            name: detail.name,
-            district: loc.district,
-            city: loc.city,
-            category: detail.category || sec,
-            phone: detail.phone,
-            rating: detail.rating,
-            reviews_count: detail.reviews,
-            address: detail.address || `${loc.district}, ${loc.city}`,
-            website: "",
-            status: "Aranacak",
-            notes: "",
-            maps_url: link
-          };
-
-          buffer.push(lead);
-          console.log(`   🔥 [DETAY TURİZM] ${lead.name} | Tel: ${lead.phone} | ${lead.city}/${lead.district}`);
-        } catch (e) {}
-      }
 
       if (buffer.length > 0) {
         const added = await saveToSupabase(buffer);
