@@ -533,14 +533,36 @@ async function runWorker(groupSelection) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await sleep(1000 + Math.random() * 500);
 
-        // Derin Hızlı Scroll (10 kez kaydırarak listedeki tüm firmaları aç)
-        for (let s = 0; s < 10; s++) {
-          await page.evaluate(() => {
+        // 🎯 GERÇEK DERİN DİBE İNME MOTORU (En dibe kadar inerek tüm firmaları aç)
+        let prevHeight = 0;
+        let sameHeightCount = 0;
+        for (let s = 1; s <= 25; s++) {
+          const scrollInfo = await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]');
-            if (feed) feed.scrollTop = feed.scrollHeight;
-            else window.scrollBy(0, 1500);
+            if (!feed) return { atBottom: true, height: 0 };
+            
+            feed.scrollTop = feed.scrollHeight;
+            const isEnd = feed.innerText.includes('Sonuçların sonuna geldiniz') || 
+                          feed.innerText.includes('daha fazla sonuç yok') ||
+                          !!document.querySelector('span.HlvSq');
+            return { atBottom: isEnd, height: feed.scrollHeight };
           });
-          await sleep(300 + Math.random() * 200);
+
+          if (scrollInfo.atBottom) {
+            console.log(`[Worker] 🛑 Listenin en dibine ulaşıldı (${s}. kaydırma).`);
+            break;
+          }
+
+          if (scrollInfo.height === prevHeight) {
+            sameHeightCount++;
+            if (sameHeightCount >= 3) break; // 3 kez yükseklik değişmediyse dibe gelinmiştir
+          } else {
+            sameHeightCount = 0;
+            prevHeight = scrollInfo.height;
+          }
+
+          // Google Maps'in yeni kartları AJAX ile yüklemesi için 1.0 - 1.2 saniye bekle
+          await sleep(1000 + Math.random() * 200);
         }
 
         // 🚀 ULTRA HIZLI ANLIK KART AYIKLAMA (Tek tek sayfa açmadan doğrudan feed'den çek)
@@ -649,8 +671,8 @@ async function runWorker(groupSelection) {
           }
         }
 
-        // 2. KARTINDA TELEFON YAZMAYAN İLK 8 FİRMANIN İÇİNE HIZLICA GİRİP TELEFONA BAK
-        const topCheckLinks = (extracted.checkLinks || []).slice(0, 8);
+        // 2. KARTINDA TELEFON YAZMAYAN FİRMALARIN İÇİNE HIZLICA GİRİP TELEFONA BAK (25 Firmaya Kadar)
+        const topCheckLinks = (extracted.checkLinks || []).slice(0, 25);
         for (const link of topCheckLinks) {
           try {
             await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 8000 });

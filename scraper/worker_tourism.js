@@ -214,13 +214,31 @@ async function startTourismScraper() {
         continue;
       }
 
-      // Derin kaydırma (7 kez)
-      for (let s = 1; s <= 7; s++) {
-        await page.evaluate(() => {
+      // 🎯 GERÇEK DERİN DİBE İNME MOTORU (En dibe kadar inerek tüm otel & bungalovları aç)
+      let prevHeight = 0;
+      let sameHeightCount = 0;
+      for (let s = 1; s <= 25; s++) {
+        const scrollInfo = await page.evaluate(() => {
           const feed = document.querySelector('div[role="feed"]');
-          if (feed) feed.scrollTop = feed.scrollHeight;
+          if (!feed) return { atBottom: true, height: 0 };
+          feed.scrollTop = feed.scrollHeight;
+          const isEnd = feed.innerText.includes('Sonuçların sonuna geldiniz') || 
+                        feed.innerText.includes('daha fazla sonuç yok') ||
+                        !!document.querySelector('span.HlvSq');
+          return { atBottom: isEnd, height: feed.scrollHeight };
         });
-        await sleep(500);
+
+        if (scrollInfo.atBottom) break;
+
+        if (scrollInfo.height === prevHeight) {
+          sameHeightCount++;
+          if (sameHeightCount >= 3) break;
+        } else {
+          sameHeightCount = 0;
+          prevHeight = scrollInfo.height;
+        }
+
+        await sleep(1000 + Math.random() * 200);
       }
 
       const extracted = await page.evaluate((defaultSec) => {
@@ -318,8 +336,8 @@ async function startTourismScraper() {
         console.log(`   🏨 [YENİ TURİZM] ${lead.name} | Tel: ${lead.phone} | ${lead.city}/${lead.district} | ${lead.rating}★ (${lead.reviews_count} Yorum)`);
       }
 
-      // Kartta telefon görünmeyen ilk 4 otele tıkla
-      const topCheck = (extracted.checkLinks || []).slice(0, 4);
+      // Kartta telefon görünmeyen ilk 20 otele hızlıca tıkla
+      const topCheck = (extracted.checkLinks || []).slice(0, 20);
       for (const link of topCheck) {
         try {
           await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 7000 });
