@@ -476,17 +476,20 @@
     let dbTotalCount = 0;
 
     async function init() {
-      // 1. Önce static JSON dosyalarını yükle (D1 limitine takılmaz, hızlı)
-      await loadStaticData();
+      // 1. Statik veriler ile en güncel canlı Supabase verisini ANINDA PARALEL çek
+      await Promise.all([
+        loadStaticData(),
+        fetchInitialLiveLeads()
+      ]);
       populateDropdowns();
       applyFilters();
       lucide.createIcons();
 
-      // 2. API'den istatistik güncelle (arka planda, sessizce)
-      setTimeout(() => fetchApiStats(), 3000);
+      // 2. Arka planda geçmiş tüm Supabase havuzunu paralel ve hızlıca yükle
+      fetchFullSupabaseHistory();
 
-      // 3. Her 60 saniyede yeni firma varsa API'den çek
-      setInterval(() => fetchApiStats(), 60000);
+      // 3. CANLI AKIŞ: Her 8 saniyede bir yeni firmaları kontrol et ve sayacı canlı artır
+      setInterval(() => pollNewLiveLeads(), 8000);
     }
 
     async function loadStaticData() {
@@ -522,49 +525,82 @@
     const SUPABASE_PUB_URL = 'https://sxvlvvcgkrbjktflroqu.supabase.co';
     const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
 
-    async function fetchApiStats() {
-      // 1. Supabase bulutundan en güncel firmaları sayfalı çek (Sınırsız & Canlı)
+    // ⚡ İLK AÇILIŞTA EN GÜNCEL İLK 1.000 FİRMAYI IŞIK HIZINDA ÇEK
+    async function fetchInitialLiveLeads() {
       try {
-        let allSupa = [];
-        for (let offset = 0; offset < 30000; offset += 1000) {
-          const supaRes = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&offset=${offset}&limit=1000`, {
-            headers: {
-              'apikey': SUPABASE_PUB_KEY,
-              'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
-            }
-          });
-          if (!supaRes.ok) break;
-          const supaData = await supaRes.json();
-          if (!Array.isArray(supaData) || supaData.length === 0) break;
-          allSupa.push(...supaData);
-          if (supaData.length < 1000) break;
-        }
-        if (allSupa.length > 0) {
-          mergeLeads(allSupa);
-        }
-      } catch(e) {}
-
-      // 2. KV cache'ten yeni firmalar varsa çek
-      try {
-        const res = await fetch('/api/new-leads?t=' + Date.now());
+        const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=1000`, {
+          headers: {
+            'apikey': SUPABASE_PUB_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
+          }
+        });
         if (res.ok) {
-          const remote = await res.json();
-          if (Array.isArray(remote) && remote.length > 0) {
-            mergeLeads(remote);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            mergeLeads(data, true);
           }
         }
       } catch(e) {}
     }
 
-    function updateCountDisplay() {
-      const count = allLeads.length;
-      const el = document.getElementById('header-total-count');
-      if (el) el.textContent = count.toLocaleString('tr-TR') + ' Firma Havuzda';
-      const st = document.getElementById('stat-total');
-      if (st) st.textContent = count.toLocaleString('tr-TR');
+    // 🚀 ARKA PLANDA GEÇMİŞ TÜM VERİLERİ PARALEL ÇEK (Sayfayı dondurmaz)
+    async function fetchFullSupabaseHistory() {
+      try {
+        const offsets = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000];
+        const promises = offsets.map(offset => 
+          fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&offset=${offset}&limit=1000`, {
+            headers: {
+              'apikey': SUPABASE_PUB_KEY,
+              'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
+            }
+          }).then(r => r.ok ? r.json() : []).catch(() => [])
+        );
+        const results = await Promise.all(promises);
+        const allHistorical = results.flat();
+        if (allHistorical.length > 0) {
+          mergeLeads(allHistorical, false);
+        }
+      } catch(e) {}
     }
 
-    function mergeLeads(newList) {
+    // 🟢 CANLI AKIŞ: HER 8 SANİYEDE BİR YENİ FİRMALARI AL VE SAYACI ARTIR
+    async function pollNewLiveLeads() {
+      try {
+        const res = await fetch(`${SUPABASE_PUB_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=250`, {
+          headers: {
+            'apikey': SUPABASE_PUB_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUB_KEY}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const added = mergeLeads(data, false);
+            if (added > 0) {
+              updateCountDisplay(true);
+            }
+          }
+        }
+      } catch(e) {}
+    }
+
+    function updateCountDisplay(pulse = false) {
+      const count = allLeads.length;
+      const el = document.getElementById('header-total-count');
+      if (el) {
+        el.innerHTML = `<span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mr-2"></span>${count.toLocaleString('tr-TR')} Firma Havuzda`;
+      }
+      const st = document.getElementById('stat-total');
+      if (st) {
+        st.textContent = count.toLocaleString('tr-TR');
+        if (pulse) {
+          st.classList.add('text-emerald-400', 'transition-all', 'duration-300');
+          setTimeout(() => st.classList.remove('text-emerald-400'), 1000);
+        }
+      }
+    }
+
+    function mergeLeads(newList, isInitial = false) {
       const phoneMap = new Map();
       allLeads.forEach(l => {
         const p = (l.phone || '').replace(/\D/g, '');
@@ -582,11 +618,14 @@
       });
 
       if (added > 0) {
-        populateDropdowns();
-        applyFilters();
+        if (!isInitial) {
+          populateDropdowns();
+          applyFilters();
+        }
+        updateCountDisplay(true);
+        updateKPIs();
       }
-      updateCountDisplay();
-      updateKPIs();
+      return added;
     }
 
     function populateDropdowns() {
