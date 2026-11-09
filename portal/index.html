@@ -634,8 +634,34 @@
     const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
 
     // INDEXEDDB HIZLI YEREL DEPO (Sayfa yenilemelerinde 45MB indirmeyi sıfıra indirir, 0.1 sn açılır)
-    const IDB_NAME = 'OBLabsStorage_v3';
+    const IDB_NAME = 'OBLabsStorage_v4';
     const IDB_STORE = 'leads_cache';
+
+    // 16 SADE VE NET ANA SEKTÖR NORMALİZASYONU (920 karmaşık kategoriyi temizler)
+    function normalizeSector(category, name) {
+      if (category === 'Test Sektör') return category;
+      const text = ((category || '') + ' ' + (name || '')).toLowerCase();
+
+      if (text.match(/oto|araç|araba|lastik|kaporta|tamirhane|çekici|kurtarma|rent a car|kiralama|egzoz|yedek parça|servisi/)) return 'Otomotiv & Araç Servisi';
+      if (text.match(/güzellik|kuaför|berber|tırnak|cilt|estetik|masaj|lazer|saç|makyaj/)) return 'Güzellik, Kuaför & Bakım';
+      if (text.match(/avukat|hukuk|icra|danışmanlık|arabuluculuk|hukuki|barosu|dava/)) return 'Hukuk & Avukatlık';
+      if (text.match(/muhasebe|mali müşavir|smm|denetim|yeminli mali|defter/)) return 'Mali Müşavirlik & Muhasebe';
+      if (text.match(/diş|hastane|klinik|doktor|psikolog|diyetisyen|fizyoterapi|tıp|sağlık|optik|eczane|ortodonti/)) return 'Sağlık, Klinik & Doktor';
+      if (text.match(/veteriner|pet shop|hayvan|köpek|kedi/)) return 'Veterinerlik & Pet';
+      if (text.match(/elektrik|tesisat|kombi|klima|çilingir|tamir|ustas|boya|badana|dekorasyon|tadilat/)) return 'Teknik Servis, Tesisat & Usta';
+      if (text.match(/mobilya|marangoz|imalat|ahşap|mutfak dolap|koltuk|döşeme/)) return 'Mobilya & İmalat';
+      if (text.match(/sigorta|acent|kasko|emeklilik|reassürans/)) return 'Sigorta & Aracılık';
+      if (text.match(/temizlik|halı yıkama|koltuk yıkama|kuru temizleme|lostra|yıkama/)) return 'Temizlik & Halı Yıkama';
+      if (text.match(/emlak|gayrimenkul|arsa|konut|realty/)) return 'Emlak & Gayrimenkul';
+      if (text.match(/inşaat|mimarlık|mühendislik|harita|proje|müteahhit|yapı/)) return 'İnşaat & Mimarlık';
+      if (text.match(/restoran|lokanta|kafe|cafe|kebap|pizza|burger|tatlı|pastane|fırın|çiğköfte|lezzet|döner|yemek/)) return 'Yeme, İçme & Restoran';
+      if (text.match(/nakliyat|lojistik|kargo|kurye|taşımacılık|vinç|forklift/)) return 'Nakliyat, Lojistik & Vinç';
+      if (text.match(/reklam|ajans|matbaa|baskı|tabela|promosyon|organizasyon|düğün|fotoğraf/)) return 'Reklam, Matbaa & Organizasyon';
+      if (text.match(/kurs|eğitim|sürücü kursu|özel ders|okul|kreş|anaokulu/)) return 'Eğitim & Kurslar';
+      if (text.match(/otel|pansiyon|turizm|seyahat|gezi/)) return 'Turizm & Konaklama';
+      
+      return 'Diğer Hizmetler';
+    }
 
     function openLocalDB() {
       return new Promise((resolve) => {
@@ -724,6 +750,9 @@
       const cached = await getLocalCachedPool();
       if (cached && Array.isArray(cached) && cached.length > 30000) {
         allLeads = cached;
+        allLeads.forEach(l => {
+          l.category = normalizeSector(l.category, l.name);
+        });
         ensureTestLead();
         populateDropdowns();
         computeInitialKPIs();
@@ -751,11 +780,11 @@
 
       try {
         const responses = await Promise.all([
-          fetch('/leads_part1.json?v=4'),
-          fetch('/leads_part2.json?v=4'),
-          fetch('/leads_manual_w1.json?v=4').catch(() => null),
-          fetch('/leads_manual_w2.json?v=4').catch(() => null),
-          fetch('/leads_manual.json?v=4').catch(() => null)
+          fetch('/leads_part1.json?v=5'),
+          fetch('/leads_part2.json?v=5'),
+          fetch('/leads_manual_w1.json?v=5').catch(() => null),
+          fetch('/leads_manual_w2.json?v=5').catch(() => null),
+          fetch('/leads_manual.json?v=5').catch(() => null)
         ]);
 
         for (const res of responses) {
@@ -766,6 +795,7 @@
               data.forEach(item => {
                 const p = (item.phone || '').replace(/\D/g, '');
                 if (p && !phoneMap.has(p)) {
+                  item.category = normalizeSector(item.category, item.name);
                   phoneMap.set(p, item);
                   allLeads.push(item);
                 }
@@ -881,12 +911,16 @@
       districts.forEach(d => distSel.innerHTML += `<option value="${d}">${d}</option>`);
       distSel.value = curDist;
 
-      const categories = [...new Set(relevant.map(l => l.category).filter(Boolean))].sort();
+      const categories = [...new Set(relevant.map(l => l.category).filter(Boolean))].sort((a, b) => {
+        if (a === 'Diğer Hizmetler') return 1;
+        if (b === 'Diğer Hizmetler') return -1;
+        return a.localeCompare(b, 'tr');
+      });
       const catSel = document.getElementById('fil-category');
       const curCat = catSel.value || 'ALL';
-      catSel.innerHTML = '<option value="ALL">Tüm Sektörler</option>';
+      catSel.innerHTML = '<option value="ALL">Tüm Sektörler (' + categories.length + ' Sektör)</option>';
       categories.forEach(k => catSel.innerHTML += `<option value="${k}">${k}</option>`);
-      catSel.value = curCat;
+      catSel.value = categories.includes(curCat) ? curCat : 'ALL';
 
       applyFilters();
     }
