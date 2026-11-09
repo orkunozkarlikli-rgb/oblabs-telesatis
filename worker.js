@@ -36,7 +36,6 @@ export default {
     }
 
     // 2. API: Yeni Firmalar (KV'den - sınırsız okuma, D1'e dokunmaz)
-    // Portal bu endpoint'i kullanarak son 24 saatte eklenen firmaları alır
     if (url.pathname === '/api/new-leads' && request.method === 'GET') {
       try {
         const cached = await env.LEADS_KV.get('new_leads_cache', { type: 'json' });
@@ -55,88 +54,113 @@ export default {
       }
     }
 
-    // 3. API: Leadleri Çek (sadece gerektiğinde - portal artık bunu çağırmıyor)
-    if (url.pathname === '/api/leads' && request.method === 'GET') {
-      try {
-        const since = url.searchParams.get('since');
-        let stmt;
-
-        if (since) {
-          stmt = env.oblabs_leads_db.prepare(
-            'SELECT * FROM leads WHERE created_at > ? ORDER BY created_at DESC LIMIT 5000'
-          ).bind(since);
-        } else {
-          stmt = env.oblabs_leads_db.prepare(
-            'SELECT * FROM leads ORDER BY created_at DESC LIMIT 100000'
-          );
-        }
-
-        const { results } = await stmt.all();
-
-        return new Response(JSON.stringify(results), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    // 4. API: Toplu Lead Ekle (Scraper İçin)
-    if (url.pathname === '/api/leads/batch' && request.method === 'POST') {
+    // 3. API: Aktivite Kalp Atışı (Çalışan süresi ve arama tıklamaları)
+    if (url.pathname === '/api/activity/heartbeat' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const items = Array.isArray(body) ? body : [body];
+        const username = (body.username || 'unknown').toLowerCase();
+        
+        const liveData = {
+          username,
+          lastSeen: new Date().toISOString(),
+          todayOnlineSec: Number(body.todayOnlineSec) || 0,
+          todayCallClicks: Number(body.todayCallClicks) || 0,
+          todayOutcomes: body.todayOutcomes || {},
+          lastAction: body.lastAction || 'Çalışıyor'
+        };
 
-        if (!items.length) {
-          return new Response(JSON.stringify({ added: 0 }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+        await env.LEADS_KV.put(`rep_live_${username}`, JSON.stringify(liveData), { expirationTtl: 86400 });
+
+        let repList = await env.LEADS_KV.get('known_reps', { type: 'json' }) || [];
+        if (!repList.includes(username)) {
+          repList.push(username);
+          await env.LEADS_KV.put('known_reps', JSON.stringify(repList));
         }
 
-        const statements = items.map(l => {
-          const id = l.id || `lead_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-          return env.oblabs_leads_db.prepare(`
-            INSERT OR IGNORE INTO leads 
-            (id, name, district, city, category, phone, rating, reviews_count, address, website, status, notes, maps_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).bind(
-            id,
-            l.name || '',
-            l.district || '',
-            l.city || '',
-            l.category || '',
-            l.phone || '',
-            Number(l.rating) || 0,
-            Number(l.reviews_count) || 0,
-            l.address || '',
-            l.website || '',
-            l.status || 'Aranacak',
-            l.notes || '',
-            l.maps_url || ''
-          );
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
-
-        const batchResults = await env.oblabs_leads_db.batch(statements);
-        let totalChanges = 0;
-        for (const r of batchResults) {
-          totalChanges += (r.meta?.changes || 0);
-        }
-
-        return new Response(JSON.stringify({ success: true, added: totalChanges }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (err) {
+      } catch(err) {
         return new Response(JSON.stringify({ error: err.message }), {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }
 
-    // 5. Statik Portal Varlıklarını Sun (Büyük JSON dosyaları için agresif tarayıcı önbellekleme)
+    // 4. API: Aktivite Logu Ekle (Arama tıklandı, sonuç girildi vb.)
+    if (url.pathname === '/api/activity/log' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const logEntry = {
+          id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          username: (body.username || 'unknown').toLowerCase(),
+          type: body.type || 'action',
+          firmName: body.firmName || '',
+          firmPhone: body.firmPhone || '',
+          outcome: body.outcome || '',
+          notes: body.notes || '',
+          timestamp: new Date().toISOString()
+        };
+
+        const today = new Date().toISOString().slice(0, 10);
+        let logs = await env.LEADS_KV.get(`activity_logs_${today}`, { type: 'json' }) || [];
+        logs.unshift(logEntry);
+        if (logs.length > 500) logs = logs.slice(0, 500);
+        await env.LEADS_KV.put(`activity_logs_${today}`, JSON.stringify(logs), { expirationTtl: 86400 * 7 });
+
+        return new Response(JSON.stringify({ success: true, entry: logEntry }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch(err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // 5. API: Aktivite Özeti & Loglar (Kamufle Yönetim Paneli İçin)
+    if (url.pathname === '/api/activity/summary' && request.method === 'GET') {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const repList = await env.LEADS_KV.get('known_reps', { type: 'json' }) || ['mete', 'oblabs-admin'];
+
+        const reps = [];
+        const now = Date.now();
+
+        for (const u of repList) {
+          const data = await env.LEADS_KV.get(`rep_live_${u}`, { type: 'json' });
+          if (data) {
+            const lastSeenMs = new Date(data.lastSeen).getTime();
+            data.isOnline = (now - lastSeenMs) < 90000; // son 90 saniye içinde aktif mi
+            reps.push(data);
+          } else {
+            reps.push({
+              username: u,
+              isOnline: false,
+              todayOnlineSec: 0,
+              todayCallClicks: 0,
+              todayOutcomes: {},
+              lastSeen: null
+            });
+          }
+        }
+
+        const logs = await env.LEADS_KV.get(`activity_logs_${today}`, { type: 'json' }) || [];
+
+        return new Response(JSON.stringify({ date: today, reps, logs }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch(err) {
+        return new Response(JSON.stringify({ error: err.message, reps: [], logs: [] }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // 6. Statik Portal Varlıklarını Sun (HTML ve JSON dosyaları)
     const assetRes = await env.ASSETS.fetch(request);
     if (url.pathname.includes('/leads_') && url.pathname.endsWith('.json')) {
       const newHeaders = new Headers(assetRes.headers);
@@ -150,23 +174,16 @@ export default {
     return assetRes;
   },
 
-  // ---- GÜNLÜK CRON (Her gece 02:00 UTC = 05:00 TR) ----
-  // Son 25 saatte eklenen yeni firmaları D1'den okur, KV'ye yazar
-  // Portal sabah açıldığında KV'den yeni firmaları alır (D1'e dokunmaz)
+  // ---- GÜNLÜK CRON ----
   async scheduled(event, env, ctx) {
     try {
-      // Son 25 saatte eklenen firmalar (biraz overlap ile güvenli)
       const since = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
       const { results } = await env.oblabs_leads_db.prepare(
         'SELECT * FROM leads WHERE created_at > ? ORDER BY created_at DESC LIMIT 10000'
       ).bind(since).all();
 
       if (results && results.length > 0) {
-        // KV'ye yaz - 24 saat TTL (otomatik silinir)
-        await env.LEADS_KV.put('new_leads_cache', JSON.stringify(results), {
-          expirationTtl: 86400
-        });
-        console.log(`Cron: ${results.length} yeni firma KV'ye yazıldı`);
+        await env.LEADS_KV.put('new_leads_cache', JSON.stringify(results), { expirationTtl: 86400 });
       }
     } catch (err) {
       console.error('Cron error:', err.message);

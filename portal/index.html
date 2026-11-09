@@ -96,22 +96,38 @@
         </div>
 
         <!-- Action Buttons & User Menu -->
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-2 sm:gap-2.5">
+          <!-- Hızlı Sayfa Geçişleri -->
+          <a href="temsilci.html" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/25 transition shadow-sm" title="Temsilci Arama ve Çalışma Paneli">
+            <i data-lucide="headset" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Çalışan Paneli</span>
+          </a>
+
+          <a href="egitim.html" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-purple-600/15 hover:bg-purple-600/25 text-purple-400 border border-purple-500/25 transition shadow-sm" title="OB Labs Telesatış Eğitimi & Canlı Metin">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Eğitim & Metin</span>
+          </a>
+
+          <a href="analiz.html" class="inline-flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Sistem Performans ve İşlem Raporu">
+            <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+            <span class="hidden md:inline">Sistem Raporu</span>
+          </a>
+
           <!-- Live Sync Button -->
-          <button id="btn-sync" onclick="forceSyncLatestData()" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Verileri Güncelle</span>
+          <button id="btn-sync" onclick="forceSyncLatestData()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-400"></i>
+            <span class="hidden lg:inline">Yenile</span>
           </button>
 
           <!-- Excel Export (SADECE ADMIN GÖREBİLİR) -->
-          <button id="btn-excel-export" onclick="exportToExcel()" class="hidden inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
+          <button id="btn-excel-export" onclick="exportToExcel()" class="hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 transition">
             <i data-lucide="download" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Excel İndir</span>
+            <span class="hidden sm:inline">Excel</span>
           </button>
 
           <!-- User Badge & Logout -->
-          <div class="h-8 w-px bg-slate-800 mx-1 hidden sm:block"></div>
-          <div class="flex items-center gap-2 pl-1">
+          <div class="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+          <div class="flex items-center gap-2">
             <span id="user-badge" class="text-xs font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700 capitalize">
               Kullanıcı
             </span>
@@ -616,6 +632,34 @@
       }
 
       init();
+      startHeartbeatTracker();
+    }
+
+    let onlineDurationSec = 0;
+    let heartbeatTimer = null;
+    function startHeartbeatTracker() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(function() {
+        if (!currentUser) return;
+        onlineDurationSec += 15;
+        if (onlineDurationSec % 30 === 0) {
+          try {
+            const statsKey = 'oblabs_stats_' + currentUser + '_v1';
+            const stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
+            fetch('/api/activity/heartbeat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: currentUser,
+                todayOnlineSec: onlineDurationSec,
+                todayCallClicks: stats.todayCalls || 0,
+                todayOutcomes: stats.outcomes || {},
+                lastAction: 'Data Havuzu Ekranında'
+              })
+            }).catch(function(){});
+          } catch (e) {}
+        }
+      }, 15000);
     }
 
     // LEAD DATA & REFRESH
@@ -1188,8 +1232,26 @@
     function handleCallClick() {
       // Arama sayısını kaydet
       recordCall(currentUser);
-      // Durumu otomatik olarak "Cevapsız" yap (kullanıcı sonucu kendisi günceller)
+      
       const lead = filteredList[modalIndex];
+
+      // API Aktivite Logu ve Sayacı (Arka planda admin/analiz ekranına gider)
+      try {
+        fetch('/api/activity/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: currentUser,
+            type: 'call_click',
+            firmName: lead ? lead.name : '',
+            firmPhone: lead ? lead.phone : '',
+            outcome: 'Arama Başlatıldı',
+            notes: 'Data ekranından tel linkine tıklandı'
+          })
+        }).catch(function(){});
+      } catch (e) {}
+
+      // Durumu otomatik olarak "Cevapsız" yap (kullanıcı sonucu kendisi günceller)
       if (lead && (!lead.status || lead.status === 'Aranacak')) {
         globalKPIs.pending--;
         lead.status = 'Cevapsız';

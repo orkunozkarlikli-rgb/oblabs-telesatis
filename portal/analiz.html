@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OB Labs — Sistem Performans ve İşlem Raporu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-blue-600 selection:text-white">
+
+  <!-- Giriş Doğrulama (Güvenlik Kapısı) -->
+  <div id="auth-gate" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md">
+    <div class="w-full max-w-sm p-6 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl text-center">
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 mb-4 shadow-lg">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <h2 class="text-xl font-bold text-white mb-1">Performans Raporu</h2>
+      <p class="text-xs text-slate-400 mb-5">Verileri görüntülemek için yetki anahtarınızı giriniz</p>
+      
+      <form onsubmit="verifyAdminAccess(event)" class="space-y-3.5">
+        <input id="admin-pass-input" type="password" placeholder="Yetki Anahtarı" required
+               class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-blue-500 outline-none text-center">
+        <div id="auth-error-msg" class="text-xs text-rose-400 hidden">Geçersiz yetki anahtarı.</div>
+        <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition">
+          Raporu Aç
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Üst Bar -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3.5">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-black text-sm">
+          OB
+        </div>
+        <div>
+          <span class="text-sm font-extrabold text-white tracking-tight">SİSTEM PERFORMANS ANALİZİ</span>
+          <span class="hidden sm:inline-block text-[10px] text-slate-400 font-mono ml-2">Aktivite & Log Raporu</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="fetchActivitySummary()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>Yenile</span>
+        </button>
+        <a href="temsilci.html" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Çalışan Paneli</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span>Data Havuzu</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- Genel Toplam İstatistikler -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs mb-1">
+          <span>Bugün Aktif Çalışan</span>
+          <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <div id="stat-active-reps" class="text-2xl font-bold text-white">0</div>
+        <div class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Çevrimiçi Temsilciler
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs mb-1">
+          <span>Toplam "Ara" Tıklaması</span>
+          <i data-lucide="phone-outgoing" class="w-4 h-4 text-blue-400"></i>
+        </div>
+        <div id="stat-total-clicks" class="text-2xl font-bold text-blue-400">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">Ekip tarafından başlatılan aramalar</div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs mb-1">
+          <span>Verilen Teklifler</span>
+          <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i>
+        </div>
+        <div id="stat-total-proposals" class="text-2xl font-bold text-purple-400">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">WhatsApp / Telefon Teklifleri</div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs mb-1">
+          <span>Kapanan Satışlar</span>
+          <i data-lucide="trophy" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <div id="stat-total-sales" class="text-2xl font-bold text-emerald-400">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">15.000 TL + KDV Paketler</div>
+      </div>
+    </div>
+
+    <!-- 1. ÇALIŞAN PERFORMANS TABLOSU (SÜRE VE ARAMA SAYILARI) -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="user-check" class="w-4 h-4 text-blue-400"></i>
+          <h2 class="text-sm font-bold text-white">Çalışan Bazlı Süre ve Arama Sayıları</h2>
+        </div>
+        <div class="text-xs text-slate-400 font-mono" id="current-date-label"></div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm text-slate-200">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Çalışan</th>
+              <th class="py-3 px-4">Durum</th>
+              <th class="py-3 px-4">Sistemde Bulunma Süresi</th>
+              <th class="py-3 px-4">"Ara" Tıklaması</th>
+              <th class="py-3 px-4">Teklif</th>
+              <th class="py-3 px-4">Randevu</th>
+              <th class="py-3 px-4">Satış</th>
+              <th class="py-3 px-4">Dönüşüm Oranı</th>
+            </tr>
+          </thead>
+          <tbody id="reps-table-body" class="divide-y divide-slate-800/60 font-medium">
+            <tr>
+              <td colspan="8" class="py-6 text-center text-slate-500">Veriler yükleniyor...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. GERÇEK ZAMANLI İŞLEM LOGLARI -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i>
+          <h2 class="text-sm font-bold text-white">Canlı Aktivite & İşlem Logları</h2>
+          <span id="log-count-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="exportLogsToCsv()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Logları İndir (CSV)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-[450px] overflow-y-auto custom-scroll">
+        <table class="w-full text-left text-xs text-slate-200">
+          <thead class="sticky top-0 bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 z-10">
+            <tr>
+              <th class="py-2.5 px-3">Saat</th>
+              <th class="py-2.5 px-3">Çalışan</th>
+              <th class="py-2.5 px-3">İşlem / Aksiyon</th>
+              <th class="py-2.5 px-3">Aranan Firma</th>
+              <th class="py-2.5 px-3">Telefon</th>
+              <th class="py-2.5 px-3">Sonuç & Not</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body" class="divide-y divide-slate-800/50">
+            <tr>
+              <td colspan="6" class="py-6 text-center text-slate-500">Henüz kaydedilmiş işlem logu yok.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const ADMIN_PASS = '4810218ork';
+    const AUTH_SESSION_KEY = 'oblabs_analiz_auth';
+
+    // Oturum Kontrolü
+    if (sessionStorage.getItem(AUTH_SESSION_KEY) === 'granted' || localStorage.getItem('oblabs_auth_user') === 'oblabs-admin') {
+      document.getElementById('auth-gate').classList.add('hidden');
+      initDashboard();
+    }
+
+    function verifyAdminAccess(e) {
+      e.preventDefault();
+      const val = document.getElementById('admin-pass-input').value.trim();
+      if (val === ADMIN_PASS || val === 'mete24635') {
+        sessionStorage.setItem(AUTH_SESSION_KEY, 'granted');
+        document.getElementById('auth-gate').classList.add('hidden');
+        initDashboard();
+      } else {
+        document.getElementById('auth-error-msg').classList.remove('hidden');
+      }
+    }
+
+    function formatDuration(sec) {
+      if (!sec) return '00 dk';
+      const hrs = Math.floor(sec / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      if (hrs > 0) return `${hrs} sa ${mins} dk`;
+      return `${mins} dk ${sec % 60} sn`;
+    }
+
+    function formatTime(isoStr) {
+      if (!isoStr) return '-';
+      const d = new Date(isoStr);
+      return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    let rawLogs = [];
+
+    async function fetchActivitySummary() {
+      try {
+        const res = await fetch('/api/activity/summary');
+        if (!res.ok) throw new Error('API yanıt vermedi');
+        const data = await res.json();
+
+        renderDashboard(data);
+      } catch(err) {
+        console.warn('API özeti alınamadı, yerel depolama verileri gösteriliyor:', err);
+        renderFallbackLocalStats();
+      }
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('current-date-label').textContent = `Tarih: ${data.date || new Date().toISOString().slice(0, 10)}`;
+
+      const reps = data.reps || [];
+      rawLogs = data.logs || [];
+
+      // Toplamları hesapla
+      let activeCount = 0;
+      let totalClicks = 0;
+      let totalSales = 0;
+      let totalProposals = 0;
+
+      reps.forEach(r => {
+        if (r.isOnline) activeCount++;
+        totalClicks += (r.todayCallClicks || 0);
+        totalSales += (r.todayOutcomes?.sales || 0);
+        totalProposals += (r.todayOutcomes?.proposals || 0);
+      });
+
+      document.getElementById('stat-active-reps').textContent = activeCount;
+      document.getElementById('stat-total-clicks').textContent = totalClicks;
+      document.getElementById('stat-total-proposals').textContent = totalProposals;
+      document.getElementById('stat-total-sales').textContent = totalSales;
+
+      // Çalışan Tablosu
+      const tableBody = document.getElementById('reps-table-body');
+      if (reps.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-500">Kayıtlı çalışan aktivitesi bulunamadı.</td></tr>`;
+      } else {
+        tableBody.innerHTML = reps.map(r => {
+          const clicks = r.todayCallClicks || 0;
+          const sales = r.todayOutcomes?.sales || 0;
+          const prop = r.todayOutcomes?.proposals || 0;
+          const appt = r.todayOutcomes?.appointments || 0;
+          const rate = clicks > 0 ? ((sales / clicks) * 100).toFixed(1) : '0.0';
+
+          const statusBadge = r.isOnline 
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Çevrimiçi</span>`
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[11px]">Çevrimdışı</span>`;
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-4 font-bold text-white capitalize">${r.username}</td>
+              <td class="py-3 px-4">${statusBadge}</td>
+              <td class="py-3 px-4 font-mono text-blue-400 font-bold">${formatDuration(r.todayOnlineSec)}</td>
+              <td class="py-3 px-4 font-mono text-slate-200 font-bold">${clicks} kez</td>
+              <td class="py-3 px-4 text-purple-400 font-bold">${prop}</td>
+              <td class="py-3 px-4 text-amber-400 font-bold">${appt}</td>
+              <td class="py-3 px-4 text-emerald-400 font-bold">${sales}</td>
+              <td class="py-3 px-4 font-mono text-slate-300">%${rate}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Loglar Tablosu
+      document.getElementById('log-count-badge').textContent = rawLogs.length;
+      const logsBody = document.getElementById('logs-table-body');
+
+      if (rawLogs.length === 0) {
+        logsBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">Bugün henüz işlem logu oluşmadı.</td></tr>`;
+      } else {
+        logsBody.innerHTML = rawLogs.map(l => {
+          let badge = '';
+          if (l.type === 'call_click') {
+            badge = `<span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">Arama Tıklandı</span>`;
+          } else if (l.outcome === 'Satış') {
+            badge = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">🎉 Satış Yapıldı</span>`;
+          } else if (l.outcome === 'Teklif') {
+            badge = `<span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px]">📋 Teklif Gönderildi</span>`;
+          } else {
+            badge = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">${l.outcome || l.type}</span>`;
+          }
+
+          return `
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="py-2.5 px-3 font-mono text-slate-400">${formatTime(l.timestamp)}</td>
+              <td class="py-2.5 px-3 font-semibold text-slate-200 capitalize">${l.username}</td>
+              <td class="py-2.5 px-3">${badge}</td>
+              <td class="py-2.5 px-3 font-medium text-white max-w-[180px] truncate">${l.firmName || '-'}</td>
+              <td class="py-2.5 px-3 font-mono text-slate-400">${l.firmPhone || '-'}</td>
+              <td class="py-2.5 px-3 text-slate-300 text-[11px] max-w-[250px] truncate">${l.notes || l.outcome || '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      lucide.createIcons();
+    }
+
+    function renderFallbackLocalStats() {
+      // Yerel localStorage'daki kullanıcı verisini fallback göster
+      const users = ['mete', 'oblabs-admin'];
+      const today = new Date().toISOString().slice(0, 10);
+      const reps = users.map(u => {
+        const stats = JSON.parse(localStorage.getItem(`oblabs_stats_${u}_v1`) || '{}');
+        const timerSec = parseInt(localStorage.getItem(`oblabs_timer_${u}_${today}`) || '0', 10);
+        return {
+          username: u,
+          isOnline: u === localStorage.getItem('oblabs_auth_user'),
+          todayOnlineSec: timerSec,
+          todayCallClicks: stats.todayCalls || 0,
+          todayOutcomes: {
+            sales: stats.totalSales || 0,
+            proposals: stats.totalProposals || 0,
+            appointments: stats.totalAppointments || 0
+          }
+        };
+      });
+
+      renderDashboard({ date: today, reps, logs: [] });
+    }
+
+    function exportLogsToCsv() {
+      if (!rawLogs.length) {
+        alert('İndirilecek log kaydı bulunamadı.');
+        return;
+      }
+
+      let csv = 'Zaman,Calisan,Islem,Firma,Telefon,Sonuc,Notlar\n';
+      rawLogs.forEach(l => {
+        csv += `"${l.timestamp}","${l.username}","${l.type}","${(l.firmName||'').replace(/"/g, '""')}","${l.firmPhone||''}","${l.outcome||''}","${(l.notes||'').replace(/"/g, '""')}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `oblabs_aktivite_loglari_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    }
+
+    function initDashboard() {
+      fetchActivitySummary();
+      setInterval(fetchActivitySummary, 15000); // her 15 saniyede bir otomatik yenile
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OB Labs — Temsilci Çalışma Paneli</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-blue-600 selection:text-white">
+
+  <!-- Giriş Kontrolü -->
+  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md hidden">
+    <div class="w-full max-w-sm p-6 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl text-center">
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl mb-4 shadow-lg shadow-blue-500/20">
+        OB
+      </div>
+      <h2 class="text-xl font-bold text-white mb-1">Temsilci Girişi</h2>
+      <p class="text-xs text-slate-400 mb-5">Çalışma panelinize erişmek için giriş yapın</p>
+      
+      <form onsubmit="handleTemsilciLogin(event)" class="space-y-3.5">
+        <input id="input-username" type="text" placeholder="Kullanıcı Adı (Örn: mete)" required
+               class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-blue-500 outline-none">
+        <input id="input-password" type="password" placeholder="Şifre" required
+               class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-blue-500 outline-none">
+        <div id="login-error-msg" class="text-xs text-rose-400 hidden">Kullanıcı adı veya şifre hatalı.</div>
+        <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition">
+          Panele Giriş Yap
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Üst Bar -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-blue-500/20">
+          OB
+        </div>
+        <div>
+          <span class="text-sm font-extrabold text-white">ÇALIŞAN PANELİ</span>
+          <span class="text-[10px] text-emerald-400 font-mono ml-2 flex items-center gap-1 inline-flex">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Çevrimiçi
+          </span>
+        </div>
+      </div>
+
+      <!-- Orta: Aktif Süre Sayaç -->
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono">
+        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
+        <span class="text-slate-400">Bugünkü Süre:</span>
+        <span id="timer-display" class="font-bold text-slate-100">00:00:00</span>
+      </div>
+
+      <!-- Sağ: Navigasyon & Çıkış -->
+      <div class="flex items-center gap-2">
+        <a href="egitim.html" class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition">
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+          <span>Eğitim & Metin</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span class="hidden sm:inline">Data Ekranı</span>
+        </a>
+        <button onclick="handleLogout()" title="Oturumu Kapat" class="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- 1. KULLANICININ YÜKLEDİĞİ GÖRSELİN BİREBİR AYNISI: "Benim İstatistiklerim" -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i>
+          <span class="text-sm font-bold text-slate-200">Benim İstatistiklerim</span>
+        </div>
+        <span id="stat-username" class="text-xs font-mono text-slate-500">oblabs-admin</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400">Bugün Arama</div>
+          <div id="stat-today-calls" class="text-xl font-bold text-blue-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400">Toplam Arama</div>
+          <div id="stat-total-calls" class="text-xl font-bold text-slate-200 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400">Teklif Verilen</div>
+          <div id="stat-proposals" class="text-xl font-bold text-purple-400 mt-0.5">0</div>
+        </div>
+        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400">Randevu</div>
+          <div id="stat-appointments" class="text-xl font-bold text-amber-400 mt-0.5">0</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1 bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400">🎯 Satış / Oran</div>
+          <div id="stat-sales" class="text-xl font-bold text-emerald-400 mt-0.5">0 <span class="text-xs text-slate-400 font-normal">(0.0%)</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ÇALIŞMA ALANI: ARAMA KARTI VE CANLI KONUŞMA ASİSTANI -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Sol: Aktif Arama & Görüşme Kartı (2 Kolon) -->
+      <div class="lg:col-span-2 space-y-4">
+        
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+          
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/20">
+                Sıradaki Arama
+              </span>
+              <span id="lead-category" class="text-xs text-slate-400 font-medium truncate max-w-[200px]">
+                Güzellik, Kuaför & Bakım
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="skipToNextLead()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700 flex items-center gap-1">
+                <span>Sonraki</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Firma Bilgileri -->
+          <div class="mb-6">
+            <h1 id="lead-name" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+              ALP YAPI DEKORASYON
+            </h1>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-3">
+              <span class="flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-400"></i>
+                <span id="lead-location">Pendik / İstanbul</span>
+              </span>
+              <span class="flex items-center gap-1">
+                <i data-lucide="globe-2" class="w-3.5 h-3.5 text-rose-400"></i>
+                <span class="text-rose-400 font-semibold">Web Sitesi Yok</span>
+              </span>
+            </div>
+            <p id="lead-address" class="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800/80 font-mono">
+              YENİ MAH. SÜREYYA PAŞA CAD. BANKACILAR SİTESİ NO: 34 / A, Pendik / İstanbul
+            </p>
+          </div>
+
+          <!-- BÜYÜK ARA BUTONU -->
+          <div class="mb-6">
+            <a id="btn-call-action" href="tel:02164913102" onclick="handleCallClick()"
+               class="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-600/25 transition transform active:scale-[0.98]">
+              <i data-lucide="phone-outgoing" class="w-6 h-6 animate-pulse"></i>
+              <span id="call-phone-text">HEMEN ARA: 0216 491 31 02</span>
+            </a>
+          </div>
+
+          <!-- GÖRÜŞME SONUCU SEÇİMİ -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+              Görüşme Sonucu & Not
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+              <button onclick="selectOutcome('Teklif')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-blue-500 text-xs font-semibold text-slate-200 transition text-center" data-val="Teklif">
+                📋 Teklif
+              </button>
+              <button onclick="selectOutcome('Randevu')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-purple-500 text-xs font-semibold text-slate-200 transition text-center" data-val="Randevu">
+                📅 Randevu
+              </button>
+              <button onclick="selectOutcome('Cevapsız')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-600 text-xs font-semibold text-slate-200 transition text-center" data-val="Cevapsız">
+                📵 Cevapsız
+              </button>
+              <button onclick="selectOutcome('İstemiyor')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-rose-500 text-xs font-semibold text-slate-200 transition text-center" data-val="İstemiyor">
+                ❌ İstemiyor
+              </button>
+              <button onclick="selectOutcome('Satış')" class="outcome-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-emerald-500 text-xs font-semibold text-emerald-400 transition text-center" data-val="Satış">
+                🎉 Satış!
+              </button>
+            </div>
+
+            <textarea id="call-notes-input" rows="2" placeholder="Görüşme notları (Müşteri ne dedi, WhatsApp'tan ne iletildi?)..."
+                      class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-blue-500 outline-none resize-none mb-3"></textarea>
+
+            <button onclick="saveCallAndNext()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>Kaydet ve Sonraki Firmaya Geç</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Sağ: Canlı Arama Asistanı & Hızlı İtirazlar (1 Kolon) -->
+      <div class="space-y-4">
+        
+        <!-- Hızlı Konuşma Kartı -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-lg">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Açılış Metni</span>
+            </div>
+            <a href="egitim.html" target="_blank" class="text-[11px] text-blue-400 hover:underline">Tam Eğitim →</a>
+          </div>
+
+          <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-200 leading-relaxed font-medium">
+            "Merhaba, iyi günler. Ben <span class="text-blue-400 font-bold" id="script-rep-name">Mete</span>, <strong>OB Labs</strong> firmasından arıyorum. İşletmenizin internette aktif web sitesi olmadığını gördük. 15.000 TL + KDV'ye domain, hosting ve SEO dahil profesyonel web sitesi hazırlıyoruz. İşletmeniz için böyle bir web sitesi düşünür müsünüz?"
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Hızlı İtiraz Cevapları:</span>
+            
+            <div class="space-y-2 text-xs">
+              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
+                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
+                  <span>💰 "Fiyat yüksek"</span>
+                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
+                </summary>
+                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
+                  "Yalnızca tasarım değil; domain, hızlı hosting ve SEO da pakete dahil. İlk yıl hiçbir ekstra masrafınız olmuyor."
+                </p>
+              </details>
+
+              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
+                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
+                  <span>📸 "Instagram'ımız var"</span>
+                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
+                </summary>
+                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
+                  "Instagram'ı tamamlayan bir platformdur. Sosyal medyada olmayan ve Google'da arayan müşteriler de size ulaşır, güvenilirlik sağlar."
+                </p>
+              </details>
+
+              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
+                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
+                  <span>🤔 "Düşüneyim"</span>
+                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
+                </summary>
+                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
+                  "Çok normal. Detayları ve örnekleri hemen WhatsApp'tan ileteyim, inceledikten sonra değerlendirelim."
+                </p>
+              </details>
+
+              <details class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 cursor-pointer group">
+                <summary class="font-bold text-amber-400 list-none flex items-center justify-between">
+                  <span>📉 "Bütçemiz yok"</span>
+                  <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">▼</span>
+                </summary>
+                <p class="text-slate-300 mt-2 text-[11px] leading-relaxed">
+                  "Anlıyorum. Notlarımızı kaydedeyim, önümüzdeki ay uygun bir zamanda tekrar değerlendirelim."
+                </p>
+              </details>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const AUTH_KEY = 'oblabs_auth_user';
+    let currentUser = localStorage.getItem(AUTH_KEY) || '';
+
+    // Giriş Kontrolü
+    if (!currentUser) {
+      document.getElementById('login-modal').classList.remove('hidden');
+    } else {
+      initPanel(currentUser);
+    }
+
+    function handleTemsilciLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('input-username').value.trim().toLowerCase();
+      const p = document.getElementById('input-password').value.trim();
+
+      const VALID_USERS = {
+        'oblabs-admin': '4810218ork',
+        'mete': 'mete24635'
+      };
+
+      if (VALID_USERS[u] && VALID_USERS[u] === p) {
+        localStorage.setItem(AUTH_KEY, u);
+        document.getElementById('login-modal').classList.add('hidden');
+        initPanel(u);
+      } else {
+        document.getElementById('login-error-msg').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('Oturumu kapatmak istediğinize emin misiniz?')) {
+        localStorage.removeItem(AUTH_KEY);
+        location.reload();
+      }
+    }
+
+    // Sayaç & Zaman Takibi
+    let sessionSeconds = 0;
+    let timerInterval = null;
+
+    function startSessionTimer() {
+      const today = new Date().toISOString().slice(0, 10);
+      const timerKey = `oblabs_timer_${currentUser}_${today}`;
+      sessionSeconds = parseInt(localStorage.getItem(timerKey) || '0', 10);
+
+      updateTimerDisplay();
+
+      timerInterval = setInterval(() => {
+        sessionSeconds++;
+        localStorage.setItem(timerKey, sessionSeconds);
+        updateTimerDisplay();
+      }, 1000);
+
+      // Her 30 saniyede bir merkeze Heartbeat gönder (Yönetici panelinde görünmesi için)
+      setInterval(sendHeartbeat, 30000);
+      sendHeartbeat(); // ilk açılışta hemen gönder
+    }
+
+    function updateTimerDisplay() {
+      const hrs = String(Math.floor(sessionSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((sessionSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(sessionSeconds % 60).padStart(2, '0');
+      const el = document.getElementById('timer-display');
+      if (el) el.textContent = `${hrs}:${mins}:${secs}`;
+    }
+
+    // İstatistik Yükleme & Güncelleme
+    function loadStats() {
+      const today = new Date().toISOString().slice(0, 10);
+      const statsKey = `oblabs_stats_${currentUser}_v1`;
+      let stats = { totalCalls: 0, todayCalls: 0, totalSales: 0, totalProposals: 0, totalAppointments: 0, lastDay: today };
+
+      try {
+        const raw = localStorage.getItem(statsKey);
+        if (raw) stats = JSON.parse(raw);
+      } catch(e) {}
+
+      if (stats.lastDay !== today) {
+        stats.todayCalls = 0;
+        stats.lastDay = today;
+      }
+
+      document.getElementById('stat-today-calls').textContent = stats.todayCalls || 0;
+      document.getElementById('stat-total-calls').textContent = stats.totalCalls || 0;
+      document.getElementById('stat-proposals').textContent = stats.totalProposals || 0;
+      document.getElementById('stat-appointments').textContent = stats.totalAppointments || 0;
+      
+      const sales = stats.totalSales || 0;
+      const total = stats.totalCalls || 0;
+      const rate = total > 0 ? ((sales / total) * 100).toFixed(1) : '0.0';
+      document.getElementById('stat-sales').innerHTML = `${sales} <span class="text-xs text-slate-400 font-normal">(${rate}%)</span>`;
+    }
+
+    // Lead Havuzunu Yükleme
+    let leadPool = [];
+    let currentLeadIndex = 0;
+
+    async function loadLeads() {
+      try {
+        const res = await fetch('leads_manual.json?v=7');
+        if (res.ok) {
+          leadPool = await res.json();
+          renderCurrentLead();
+        }
+      } catch(e) {
+        console.error('Lead yüklenemedi:', e);
+      }
+    }
+
+    function renderCurrentLead() {
+      if (!leadPool.length) return;
+      const lead = leadPool[currentLeadIndex % leadPool.length];
+      if (!lead) return;
+
+      document.getElementById('lead-name').textContent = lead.name || 'İsimsiz Firma';
+      document.getElementById('lead-category').textContent = lead.category || 'Genel';
+      document.getElementById('lead-location').textContent = `${lead.district || ''} / ${lead.city || ''}`;
+      document.getElementById('lead-address').textContent = lead.address || 'Adres belirtilmemiş';
+      
+      const ph = lead.phone || '';
+      document.getElementById('btn-call-action').href = `tel:${ph}`;
+      document.getElementById('call-phone-text').textContent = `HEMEN ARA: ${ph}`;
+
+      // Reset outcome selection & notes
+      document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-950/40'));
+      document.getElementById('call-notes-input').value = '';
+      currentOutcome = '';
+    }
+
+    function skipToNextLead() {
+      currentLeadIndex++;
+      renderCurrentLead();
+    }
+
+    let currentOutcome = '';
+    function selectOutcome(val) {
+      currentOutcome = val;
+      document.querySelectorAll('.outcome-btn').forEach(b => {
+        if (b.dataset.val === val) {
+          b.classList.add('ring-2', 'ring-blue-500', 'bg-blue-950/40');
+        } else {
+          b.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-950/40');
+        }
+      });
+    }
+
+    // Arama Butonuna Tıklandığında Sayacı Artır & Log Gönder
+    function handleCallClick() {
+      const today = new Date().toISOString().slice(0, 10);
+      const statsKey = `oblabs_stats_${currentUser}_v1`;
+      let stats = { totalCalls: 0, todayCalls: 0, totalSales: 0, totalProposals: 0, totalAppointments: 0, lastDay: today };
+
+      try {
+        const raw = localStorage.getItem(statsKey);
+        if (raw) stats = JSON.parse(raw);
+      } catch(e) {}
+
+      stats.todayCalls++;
+      stats.totalCalls++;
+      localStorage.setItem(statsKey, JSON.stringify(stats));
+      loadStats();
+
+      // Log kaydı oluştur
+      const lead = leadPool[currentLeadIndex % leadPool.length] || {};
+      logActivity('call_click', lead.name, lead.phone, 'Arama Başlatıldı', '');
+    }
+
+    function saveCallAndNext() {
+      const lead = leadPool[currentLeadIndex % leadPool.length] || {};
+      const notes = document.getElementById('call-notes-input').value.trim();
+
+      if (currentOutcome) {
+        const statsKey = `oblabs_stats_${currentUser}_v1`;
+        let stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
+
+        if (currentOutcome === 'Satış') stats.totalSales = (stats.totalSales || 0) + 1;
+        if (currentOutcome === 'Teklif') stats.totalProposals = (stats.totalProposals || 0) + 1;
+        if (currentOutcome === 'Randevu') stats.totalAppointments = (stats.totalAppointments || 0) + 1;
+
+        localStorage.setItem(statsKey, JSON.stringify(stats));
+        loadStats();
+
+        logActivity('outcome_saved', lead.name, lead.phone, currentOutcome, notes);
+      }
+
+      skipToNextLead();
+    }
+
+    // Aktivite Loglama (Cloudflare KV'ye kaydeder)
+    async function logActivity(type, firmName, firmPhone, outcome, notes) {
+      try {
+        await fetch('/api/activity/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: currentUser,
+            type,
+            firmName,
+            firmPhone,
+            outcome,
+            notes
+          })
+        });
+      } catch(e) {}
+    }
+
+    // Heartbeat (Yöneticinin online süreleri görebilmesi için)
+    async function sendHeartbeat() {
+      if (!currentUser) return;
+      try {
+        const statsKey = `oblabs_stats_${currentUser}_v1`;
+        const stats = JSON.parse(localStorage.getItem(statsKey) || '{}');
+
+        await fetch('/api/activity/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: currentUser,
+            todayOnlineSec: sessionSeconds,
+            todayCallClicks: stats.todayCalls || 0,
+            todayOutcomes: {
+              sales: stats.totalSales || 0,
+              proposals: stats.totalProposals || 0,
+              appointments: stats.totalAppointments || 0
+            },
+            lastAction: 'Arama Ekranında Aktif'
+          })
+        });
+      } catch(e) {}
+    }
+
+    function initPanel(username) {
+      currentUser = username;
+      document.getElementById('stat-username').textContent = username;
+      
+      const clean = username.charAt(0).toUpperCase() + username.slice(1);
+      const repEl = document.getElementById('script-rep-name');
+      if (repEl) repEl.textContent = clean;
+
+      loadStats();
+      startSessionTimer();
+      loadLeads();
+    }
+  </script>
+</body>
+</html>

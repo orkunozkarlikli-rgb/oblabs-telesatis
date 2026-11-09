@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OB Labs — Tele Satış Ekibi Konuşma ve Satış Eğitimi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+      body { background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #ddd !important; break-inside: avoid; }
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-blue-600 selection:text-white">
+
+  <!-- Üst Bar (Navigasyon) -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3.5">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white shadow-lg shadow-blue-500/20">
+            OB
+          </div>
+          <div>
+            <span class="text-base font-extrabold tracking-tight text-white group-hover:text-blue-400 transition">OB LABS</span>
+            <span class="hidden sm:inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 ml-2">Akademi 2026</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3 no-print">
+        <a href="temsilci.html" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>Çalışan Paneli</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Data Havuzu</span>
+        </a>
+        <button onclick="window.print()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Kitapçık Yazdır (PDF)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Başlık & Doküman Künyesi -->
+    <div class="bg-gradient-to-br from-slate-900 via-slate-900/90 to-blue-950/40 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl mb-8">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+          PERSONEL EĞİTİM DOKÜMANI · 2026
+        </div>
+        <div class="text-xs text-slate-400 font-mono">
+          Revizyon: 2.4 | OB Labs Satış Operasyonu
+        </div>
+      </div>
+
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+        TELE SATIŞ EKİBİ KONUŞMA VE SATIŞ EĞİTİMİ
+      </h1>
+      <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-3xl">
+        Bu doküman, aranan işletme sahibine güven vermek, ihtiyacını anlamak, web sitesinin faydasını somut örneklerle anlatmak, fiyat itirazlarını karşılamak ve satışı sonuçlandırmak için hazırlanmıştır.
+      </p>
+
+      <!-- Hızlı Özet Kartları -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+        <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+          <div class="text-[11px] text-slate-400">Satış Hizmetimiz</div>
+          <div class="text-sm font-bold text-slate-200 mt-0.5">Özel Web Sitesi</div>
+        </div>
+        <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+          <div class="text-[11px] text-slate-400">Satış Fiyatımız</div>
+          <div class="text-sm font-bold text-emerald-400 mt-0.5">15.000 TL + KDV</div>
+        </div>
+        <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+          <div class="text-[11px] text-slate-400">Pakete Dahil</div>
+          <div class="text-sm font-bold text-blue-400 mt-0.5">Domain + Hosting + SEO</div>
+        </div>
+        <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+          <div class="text-[11px] text-slate-400">Satış Yaklaşımı</div>
+          <div class="text-sm font-bold text-amber-400 mt-0.5">Güven & İhtiyaç Odaklı</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANLI KONUŞMA METNİ (TELEPROMPTER ARACI) -->
+    <section class="mb-10 no-print">
+      <div class="bg-slate-900 border-2 border-blue-500/40 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+              <i data-lucide="mic" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-white">Canlı Arama Konuşma Metni (Teleprompter)</h2>
+              <p class="text-xs text-slate-400">Görüşme anında doğrudan bu şablon üzerinden konuşabilirsiniz</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Temsilci Adınız:</span>
+            <input id="agent-name-input" type="text" value="Mete" placeholder="Adınız" 
+                   oninput="updateScriptAgentName(this.value)"
+                   class="text-xs font-semibold px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-blue-400 w-28 focus:border-blue-500 outline-none">
+          </div>
+        </div>
+
+        <!-- Teleprompter Metni -->
+        <div id="teleprompter-text" class="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-sm sm:text-base leading-relaxed text-slate-200 font-medium space-y-3">
+          <p>
+            "Merhaba, iyi günler. Ben <span class="agent-name-slot text-blue-400 font-bold underline decoration-blue-500/50">Mete</span>, <span class="text-white font-bold">OB Labs</span> firmasından arıyorum. İşletmelere özel profesyonel web siteleri hazırlıyoruz."
+          </p>
+          <p>
+            "İşletmenizin şu anda internette aktif bir web sitesi olmadığını gördük. Potansiyel müşterilerinizin size daha kolay ulaşmasını ve işletmenizin Google'da görünür olmasını sağlayacak çözümlerimiz hakkında bilgi vermek için ulaştım."
+          </p>
+          <p class="text-slate-400 text-xs italic pl-3 border-l-2 border-slate-700">
+            ⏳ [Müşterinin yanıtını ve tepkisini bekleyin. Müşteri konuşmaya açıksa devam edin:]
+          </p>
+          <p>
+            "İşletmenize özel, hem cep telefonlarıyla hem bilgisayarlarla tam uyumlu profesyonel web siteleri hazırlıyoruz. Web sitesi fiyatımız <span class="text-emerald-400 font-bold">15.000 TL + KDV</span>. Bu fiyata <span class="text-blue-300 font-semibold">domain, hosting ve SEO çalışmaları dahil</span> ve ilk yıl boyunca hiçbir ekstra ücret almıyoruz."
+          </p>
+          <p>
+            "Sitenizde ürünlerinizi, hizmetlerinizi ve fotoğraflarınızı sergileyebiliyoruz. Müşterileriniz doğrudan siteniz üzerinden <span class="text-emerald-400 font-semibold">WhatsApp ile size tek tıkla ulaşabiliyor</span> ve Google Haritalar konumunuz da sitenize ekleniyor. Ayrıca Google'da daha üst sıralarda yer almanıza yardımcı olacak SEO çalışmalarını da ücretsiz sunuyoruz."
+          </p>
+          <p class="text-amber-300 font-semibold">
+            "İşletmeniz için böyle bir web sitesi düşünür müsünüz?"
+          </p>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <button onclick="copyScriptText()" class="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copy-btn-text">Metni Kopyala</span>
+          </button>
+          <div class="text-[11px] text-slate-400">
+            💡 <span class="text-slate-300">İpucu:</span> Metni ezberden okur gibi değil, samimi ve danışman gibi konuşun.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HIZLI İTİRAZ KARŞILAMA BUTONLARI (MODAL / ACCORDION) -->
+    <section class="mb-10 no-print">
+      <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+        <h2 class="text-base font-bold text-white">Canlı Görüşme Anında Hızlı İtiraz Karşılama</h2>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">Görüşmede müşteri itiraz ettiğinde doğru cevaba anında ulaşmak için tıklayın:</p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <button onclick="scrollToSection('itiraz-1')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #1</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Fiyatınız çok yüksek"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-2')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #2</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Instagram hesabımız var"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-3')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #3</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Web sitesine gerek yok"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-4')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #4</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Bir düşüneyim"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-5')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #5</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Şu anda bütçemiz yok"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-6')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #6</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"Daha ucuz fiyat buldum"</div>
+        </button>
+        <button onclick="scrollToSection('itiraz-7')" class="p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1">İtiraz #7</div>
+          <div class="text-xs font-semibold text-slate-200 truncate">"İlk sıraya çıkar mısınız?"</div>
+        </button>
+        <button onclick="scrollToSection('bolum-7')" class="p-3 bg-blue-950/60 hover:bg-blue-900/50 border border-blue-800/80 rounded-xl text-left transition">
+          <div class="text-[11px] font-bold text-blue-400 mb-1">Hedef</div>
+          <div class="text-xs font-semibold text-blue-200 truncate">Satışı Sonuçlandırma →</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- 13 BÖLÜM - TAM METİN EĞİTİM İÇERİĞİ -->
+    <div class="space-y-8">
+
+      <!-- BÖLÜM 1 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">1</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Satış Temsilcisinin Görevi</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+          Bir satış temsilcisi olarak göreviniz sadece telefon açıp fiyat söylemek değildir. Asıl göreviniz:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4 text-xs sm:text-sm text-slate-200">
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>İşletme sahibiyle doğru ve saygılı iletişim kurmak.</span>
+          </div>
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>İşletmenin dijital ortamdaki eksiklerini ve web sitesi ihtiyacını anlamak.</span>
+          </div>
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>Web sitesinin işletmeye sağlayacağı gerçek müşteri faydalarını anlatmak.</span>
+          </div>
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>OB Labs hizmetini ve fiyatını net, güven veren bir tonda aktarmak.</span>
+          </div>
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>Müşterinin aklındaki soru işaretlerini ve itirazları profesyonelce karşılamak.</span>
+          </div>
+          <div class="flex items-start gap-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <span>Satışa dönüşebilecek görüşmeleri sisteme kaydedip disiplinle takip etmek.</span>
+          </div>
+        </div>
+        <div class="bg-blue-500/10 border-l-4 border-blue-500 p-3.5 rounded-r-xl text-xs sm:text-sm text-blue-200">
+          <strong>Altın Kural:</strong> İnsanlar sadece kodlardan oluşan bir web sitesi satın almaz. Daha fazla müşteriye ulaşmak, işletmelerini tanıtmak ve güvenilir bir kurumsal görünüme sahip olmak isterler.
+        </div>
+      </article>
+
+      <!-- BÖLÜM 2 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">2</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Telefon Görüşmesine Hazırlık</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-4">Arama yapmadan önce ve konuşurken şu kurallara dikkat edin:</p>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-200">
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Sessiz ve odaklanmış bir ortamda çalışın.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Konuşurken gülümseyin; tebessüm ses tonunuza doğrudan yansır.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Hızlı ve telaşlı konuşmayın, sakin ve net olun.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Karşı tarafın sözünü kesinlikle kesmeyin, sonuna kadar dinleyin.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Ezberden robot gibi okumayın, sohbet havasında danışmanlık yapın.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Müşteriye adıyla hitap edebiliyorsanız mutlaka kullanın ("Ahmet Bey").
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Fiyatı söylerken çekingen davranmayın, hizmetinizin arkasında durun.
+          </li>
+          <li class="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <span class="text-emerald-400 font-bold">✓</span> Bilmediğiniz bir konuda yalan veya kesin bilgi vermeyin.
+          </li>
+        </ul>
+      </article>
+
+      <!-- BÖLÜM 3 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">3</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">İlk Telefon Konuşması – Açılış</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">
+          <strong>İlk 15 saniye kritiktir.</strong> Müşteri bu sürede telefonu kapatıp kapatmayacağına karar verir.
+        </p>
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-sm text-slate-200 leading-relaxed mb-3">
+          "Merhaba, iyi günler. Ben [Adınız], <strong>OB Labs</strong> firmasından arıyorum. İşletmelere özel profesyonel web sitesi çözümleri sunuyoruz. İşletmenizin şu anda aktif bir web sitesi olmadığını gördük. Size işletmenizin internet ortamında daha görünür olmasını sağlayabilecek bir hizmetimiz hakkında bilgi vermek için ulaştım."
+        </div>
+        <p class="text-xs text-slate-400 italic">
+          Ardından sessiz kalın ve müşterinin tepkisini bekleyin. Müşteri konuşmaya açıksa devam edin. Meşgulse uygun bir zamanda tekrar aramak için izin isteyip kapatın.
+        </p>
+      </article>
+
+      <!-- BÖLÜM 4 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">4</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Hizmetimizi Anlatma</h2>
+        </div>
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-sm text-slate-200 leading-relaxed space-y-2 mb-4">
+          <p>"İşletmenize özel, profesyonel ve mobil uyumlu web siteleri hazırlıyoruz."</p>
+          <p class="text-emerald-400 font-bold">"Web sitesi fiyatımız 15.000 TL + KDV. Bu fiyata domain, hosting ve SEO hizmetleri dahil. Ayrıca ilk yıl boyunca hiçbir ekstra ücret almıyoruz."</p>
+          <p>"Sitenizde ürünlerinizi, hizmetlerinizi ve fotoğraflarınızı sergileyebilirsiniz. Telefon numaranız, iletişim bilgileriniz ve Google Haritalar konumunuz yer alır."</p>
+          <p>"Müşterileriniz doğrudan siteniz üzerinden WhatsApp aracılığıyla size ulaşabilir."</p>
+          <p>"Ayrıca Google'da daha üst sıralarda görünmenize yardımcı olacak SEO çalışmalarını da ücretsiz sunuyoruz."</p>
+        </div>
+      </article>
+
+      <!-- BÖLÜM 5 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">5</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Müşteriye Sorulması Gereken Sorular</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">İyi satış temsilcisi sürekli konuşan değil, doğru soruları soran kişidir:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-200">
+          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+            ❓ "Daha önce işletmeniz için bir web siteniz oldu mu?"
+          </div>
+          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+            ❓ "Müşterileriniz sizi genellikle nereden buluyor ve ulaşıyor?"
+          </div>
+          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+            ❓ "Ürün veya hizmetlerinizi internet üzerinden tanıtıyor musunuz?"
+          </div>
+          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+            ❓ "İnternetten daha fazla müşteriye ulaşmak sizin için faydalı olur mu?"
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-3 italic">
+          💡 Bu soruların hepsini arka arkaya sorgu gibi sormayın. Konuşmanın akışına göre 1 veya 2 soru yeterlidir.
+        </p>
+      </article>
+
+      <!-- BÖLÜM 6 (İTİRAZLAR) -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-extrabold flex items-center justify-center text-xs">6</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Müşteri İtirazlarını Karşılama Eğitimi</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+          Satışta itiraz almak tamamen normaldir. İtiraz, müşterinin ilgisiz olduğu anlamına gelmez; ikna edilmek istediği anlamına gelir.
+        </p>
+
+        <div class="space-y-3">
+
+          <div id="itiraz-1" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 1: "Fiyatınız yüksek."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Anlıyorum. Ancak bu hizmette yalnızca web sitesi tasarımı değil; domain, hosting ve SEO hizmetleri de paketimize dahil. İlk yıl hiçbir ekstra masrafınız olmuyor. İşletmenizin dijital ortamda profesyonel şekilde temsil edilmesi için anahtar teslim kapsamlı bir hizmet sunuyoruz."
+            </p>
+          </div>
+
+          <div id="itiraz-2" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 2: "Instagram hesabımız zaten var, gerek yok."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Instagram hesabınızın olması çok güzel. Web sitesi ise bunu tamamlayan farklı bir platformdur. Instagram'da sizi takip etmeyen veya sosyal medya kullanmayan müşteriler de Google üzerinden işletmenizi aratıp size ulaşabilir. Web sitesi firmanızın kurumsal güvenilirliğini ikiye katlar."
+            </p>
+          </div>
+
+          <div id="itiraz-3" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 3: "Web sitesine ihtiyacımız yok."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Tabii, sizi çok iyi anlıyorum. Ancak günümüzde birçok müşteri bir işletmeyle iletişime geçmeden önce ilk olarak Google'da araştırma yapıyor. Web sitenizin olması müşterinizin gözündeki güvenilirliğinizi ve kurumsal duruşunuzu doğrudan destekler."
+            </p>
+          </div>
+
+          <div id="itiraz-4" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 4: "Bir düşüneyim / Düşünüp dönerim."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Elbette, böyle bir kararı değerlendirmeniz çok normal. Size hizmetimizin kapsamını, örnek çalışmalarımızı ve fiyat detaylarımızı WhatsApp üzerinden ileteyim. İnceledikten sonra müsait olduğunuz bir vakit tekrar değerlendirelim."
+            </p>
+          </div>
+
+          <div id="itiraz-5" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 5: "Şu anda bütçemiz / paramız yok."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Anlıyorum. İşletmeniz için doğru zamanı belirlemek çok önemli. İsterseniz teklif detaylarımızı ve notlarımızı kaydedeyim; önümüzdeki ay tekrar görüşmek üzere sizi uygun bir vakitte arayayım."
+            </p>
+          </div>
+
+          <div id="itiraz-6" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 6: "Başka firmadan daha ucuza fiyat aldım."</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "Elbette fiyat karşılaştırması yapmanız çok doğal. Bizim paketimizde domain, yıllık hızlı hosting ve SEO hizmetleri de dahildir. Diğer tekliflerde bu hizmetlerin yıllık masraflarının dahil olup olmadığına ve mobil uyumuna mutlaka bakmanızı öneririm."
+            </p>
+          </div>
+
+          <div id="itiraz-7" class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-amber-400 mb-1">İTİRAZ 7: "Google'da bizi kesin birinci sıraya çıkarır mısınız?"</div>
+            <p class="text-sm text-slate-200 font-medium">
+              "SEO çalışmalarımızla Google'daki görünürlüğünüzü ve sıralamanızı en iyi seviyeye getirmeyi hedefliyoruz. Ancak Google algoritmaları gereği hiçbir ajans yasal olarak birinci sıra garantisi veremez, biz de etik olarak garanti değil, en profesyonel altyapıyı sunuyoruz."
+            </p>
+          </div>
+
+        </div>
+      </article>
+
+      <!-- BÖLÜM 7 -->
+      <article id="bolum-7" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center text-xs">7</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Satışı Sonuçlandırma</h2>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">
+          Müşteri ilgi gösterdiğinde gereksiz detay anlatmaya devam etmeyin, satışı isteyin ve net adımlar önerin:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-200">
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 font-semibold text-emerald-300">
+            👉 "İşletmeniz için böyle bir web sitesi hazırlamamızı ister misiniz?"
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 font-semibold text-emerald-300">
+            👉 "İsterseniz projenizin detaylarını birlikte netleştirelim, hemen başlayalım."
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 font-semibold text-emerald-300">
+            👉 "Başlamak için işletmenizin temel bilgilerini alabiliriz."
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 font-semibold text-emerald-300">
+            👉 "Size resmi teklifimizi ve sözleşme detaylarını WhatsApp üzerinden hemen iletiyorum."
+          </div>
+        </div>
+      </article>
+
+      <!-- BÖLÜM 8 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 font-extrabold flex items-center justify-center text-xs">8</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Telefon Görüşmesinde Yapılmaması Gerekenler</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-rose-200">
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Müşteriye ısrar ve baskı yapmak.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Gerçek olmayan indirim veya sahte kampanya söylemek.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Google'da birinci sıra garantisi vermek.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Gerçek dışı müşteri veya satış rakamları uydurmak.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Müşterinin sözünü kesmek ve tartışmaya girmek.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Fiyat konusunda yetkiniz olmayan indirimler yapmak.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Müşteri "Aramayın" dediği hâlde ısrarla aramak.
+          </div>
+          <div class="p-2.5 bg-rose-950/30 border border-rose-900/50 rounded-lg flex items-center gap-2">
+            <span class="text-rose-400 font-bold">✕</span> Yapamayacağımız özellikleri vaat etmek.
+          </div>
+        </div>
+      </article>
+
+      <!-- BÖLÜM 9 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">9</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Görüşme Sonrası Yapılacaklar Tablosu</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm text-slate-200">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Görüşme Sonucu</th>
+                <th class="py-3 px-4">Yapılacak İşlem</th>
+                <th class="py-3 px-4">Sistem Durumu</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60">
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-emerald-400">Satış Gerçekleşti</td>
+                <td class="py-2.5 px-4">Satış ve fatura kaydı oluştur, yöneticiye bildir</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Satış</span></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-blue-400">Teklif İstedi</td>
+                <td class="py-2.5 px-4">WhatsApp üzerinden resmi teklif ve örnekleri ilet</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Teklif</span></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-purple-400">Randevu / İlgileniyor</td>
+                <td class="py-2.5 px-4">Ortak takvime ekle ve arama hatırlatması kur</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Randevu</span></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-amber-400">Düşünecek / Meşgul</td>
+                <td class="py-2.5 px-4">İzin verilen gün ve saatte tekrar arama planla</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Düşünecek</span></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-slate-400">Ulaşılamadı / Cevapsız</td>
+                <td class="py-2.5 px-4">Farklı bir saatte veya ertesi gün tekrar ara</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400">Cevapsız</span></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-4 font-semibold text-rose-400">İstemiyor / İlgilenmiyor</td>
+                <td class="py-2.5 px-4">Sonucu kaydet, tekrar aranmayacak şekilde işaretle</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">İstemiyor</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- BÖLÜM 10 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">10</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Yasal ve Etik Arama Kuralları</h2>
+        </div>
+        <ul class="space-y-2 text-xs sm:text-sm text-slate-300">
+          <li class="flex items-start gap-2">
+            <span class="text-blue-400 font-bold">•</span>
+            <span>Arama listelerinin kullanımı şirket denetiminde ve halka açık ticari dizinler üzerinden yapılmaktadır.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-400 font-bold">•</span>
+            <span>Arama sırasında OB Labs kimliği ve arama amacımız dürüstçe, gizlenmeden belirtilmelidir.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-400 font-bold">•</span>
+            <span>Aranmak istemediğini belirten işletmelerin talebi sisteme derhal işlenmeli ve bir daha aranmamalıdır.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-400 font-bold">•</span>
+            <span>Müşteri iletişim bilgileri kesinlikle üçüncü şahıslarla paylaşılamaz.</span>
+          </li>
+        </ul>
+      </article>
+
+      <!-- BÖLÜM 11 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold flex items-center justify-center text-xs">11</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Örnek Tam Telefon Görüşmesi (Diyalog)</h2>
+        </div>
+        <div class="space-y-3 text-xs sm:text-sm">
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="font-bold text-blue-400">Satış Temsilcisi:</span>
+            <p class="text-slate-200 mt-1">"Merhaba, iyi günler. Ben [Adınız], OB Labs firmasından arıyorum. İşletmelere özel web sitesi çözümleri sunuyoruz. İşletmenizin şu anda aktif bir web sitesi olmadığını gördük, kısaca hizmetimizden bahsetmek isterim."</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-850 border border-slate-800/80">
+            <span class="font-bold text-slate-400">Müşteri:</span>
+            <p class="text-slate-300 mt-1">"Evet, şu an web sitemiz yok. Nasıl bir hizmet veriyorsunuz?"</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="font-bold text-blue-400">Satış Temsilcisi:</span>
+            <p class="text-slate-200 mt-1">"İşletmenize özel profesyonel bir web sitesi hazırlıyoruz. Ürünlerinizi, fotoğraflarınızı, telefon ve açık adresinizi sergiliyoruz. Müşterileriniz doğrudan WhatsApp üzerinden size ulaşabiliyor ve harita konumunuz da yer alıyor. Paketimiz 15.000 TL + KDV; domain, hosting ve SEO çalışmaları fiyata dahil, ilk yıl ekstra ücret yok. İşletmeniz için böyle bir web sitesi düşünür müsünüz?"</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-850 border border-slate-800/80">
+            <span class="font-bold text-slate-400">Müşteri:</span>
+            <p class="text-slate-300 mt-1">"Detayları nereden görebilirim?"</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="font-bold text-blue-400">Satış Temsilcisi:</span>
+            <p class="text-slate-200 mt-1">"Harika! İşletmeniz için hazırladığımız örnek tasarımları ve hizmet kapsamını hemen bu numaranıza WhatsApp üzerinden iletiyorum. İnceledikten sonra adımları birlikte netleştiririz."</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- BÖLÜM 12 & 13 -->
+      <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 print-card shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center text-xs">12 & 13</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">Başarılı Satış Temsilcisinin 5 Altın Kuralı</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center">
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-2xl font-black text-blue-400 mb-1">1</div>
+            <div class="font-bold text-xs text-white mb-1">Güven Ver</div>
+            <div class="text-[11px] text-slate-400">Önce kendini ve firmayı tanıt.</div>
+          </div>
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-2xl font-black text-blue-400 mb-1">2</div>
+            <div class="font-bold text-xs text-white mb-1">Kısa Konuş</div>
+            <div class="text-[11px] text-slate-400">Müşteriyi bilgiye boğma.</div>
+          </div>
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-2xl font-black text-blue-400 mb-1">3</div>
+            <div class="font-bold text-xs text-white mb-1">Fayda Anlat</div>
+            <div class="text-[11px] text-slate-400">Web sitesinin kazandıracağı parayı açıkla.</div>
+          </div>
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-2xl font-black text-blue-400 mb-1">4</div>
+            <div class="font-bold text-xs text-white mb-1">İtirazdan Korkma</div>
+            <div class="text-[11px] text-slate-400">Müşterinin endişesini anlamaya çalış.</div>
+          </div>
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+            <div class="text-2xl font-black text-blue-400 mb-1">5</div>
+            <div class="font-bold text-xs text-white mb-1">Satışı İste</div>
+            <div class="text-[11px] text-slate-400">İlgi gördüğünde net bir sonraki adım öner.</div>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/40 text-center">
+          <p class="text-xs sm:text-sm font-semibold text-blue-200 italic">
+            "Biz müşteriye sadece web sitesi satmıyoruz. İşletmelerin dijital dünyada daha profesyonel görünmesine ve potansiyel müşterilerine ulaşmasına yardımcı oluyoruz."
+          </p>
+          <div class="text-[11px] text-slate-400 mt-1">OB Labs · www.oblabs.com.tr</div>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    function updateScriptAgentName(val) {
+      const name = val.trim() || 'Mete';
+      document.querySelectorAll('.agent-name-slot').forEach(el => el.textContent = name);
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-amber-400');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 2000);
+      }
+    }
+
+    function copyScriptText() {
+      const text = document.getElementById('teleprompter-text').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('copy-btn-text');
+        btnText.textContent = 'Kopyalandı! ✓';
+        setTimeout(() => btnText.textContent = 'Metni Kopyala', 2000);
+      });
+    }
+
+    // Kullanıcı adını localStorage'dan al
+    const savedUser = localStorage.getItem('oblabs_auth_user');
+    if (savedUser) {
+      const clean = savedUser.charAt(0).toUpperCase() + savedUser.slice(1);
+      document.getElementById('agent-name-input').value = clean;
+      updateScriptAgentName(clean);
+    }
+  </script>
+</body>
+</html>
