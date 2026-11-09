@@ -1,4 +1,4 @@
-name: OB Labs Bulut Otomasyonu (4x Turbo Kesintisiz Dongu)
+name: OB Labs Bulut Otomasyonu (4x Turbo - 500 Ilce)
 
 on:
   schedule:
@@ -16,7 +16,7 @@ jobs:
         worker: [1, 2, 3, 4]
 
     steps:
-      - name: Proje Kodlarını Çek
+      - name: Proje Kodlarini Cek
         uses: actions/checkout@v4
 
       - name: Node.js 20 Kur
@@ -27,7 +27,7 @@ jobs:
       - name: NPM Paketlerini Kur
         run: cd scraper && npm install
 
-      - name: Chrome Tarayıcısını Kur
+      - name: Chrome Tarayicisini Kur
         run: cd scraper && npx puppeteer browsers install chrome
 
       - name: Bulut Motoru Calistir
@@ -36,30 +36,19 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           cd scraper
-          if [ "${{ matrix.worker }}" = "1" ]; then
-            echo "🚀 Motor #1: İç Anadolu & Başkent (Ankara, OSTİM, Konya, Kayseri, Denizli)..."
-            node worker_scrape.js --worker=1
-          elif [ "${{ matrix.worker }}" = "2" ]; then
-            echo "🌊 Motor #2: Ege & Akdeniz (İzmir, Bursa, Antalya, Alanya, Adana, Mersin)..."
-            node worker_scrape.js --worker=2
-          elif [ "${{ matrix.worker }}" = "3" ]; then
-            echo "🏭 Motor #3: Güneydoğu & Doğu (Gaziantep, Şanlıurfa, K.Maraş, Diyarbakır, Erzurum)..."
-            node worker_scrape.js --worker=3
-          else
-            echo "🌲 Motor #4: Karadeniz, Artvin & Bungalov / Butik Otel Turizm Motoru..."
-            node worker_tourism.js
-          fi
+          echo "🚀 Motor #${{ matrix.worker }} basliyor - 500+ ilce listesinden taze bolgeler..."
+          node worker_scrape.js --worker=${{ matrix.worker }}
 
   trigger-next-cycle:
     needs: cloud-scrape
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: 🔄 Kesintisiz Döngü (Bir Sonraki Turu Otomatik Başlat)
+      - name: Kesintisiz Dongu
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          echo "🚀 Mevcut tur tamamlandı. 30 saniye sonra yeni tur tetikleniyor..."
+          echo "Mevcut tur tamamlandi. 30 saniye sonra yeni tur basliyor..."
           sleep 30
           curl -X POST \
             -H "Authorization: token $GH_PAT" \
