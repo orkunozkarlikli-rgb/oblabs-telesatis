@@ -475,7 +475,8 @@
     const AUTH_KEY = 'oblabs_tele_auth_user_v2';
     const VALID_USERS = {
       'oblabs-admin': '4810218ork',
-      'mete': 'mete24635'
+      'mete': 'mete24635',
+      'nazlie': 'Asel1108'
     };
 
     // TEST FİRMASI — her zaman listenin başında göster
@@ -597,9 +598,9 @@
       const rawPass = document.getElementById('login-password').value.trim();
 
       const userKey = rawUser.toLowerCase();
-      const passKey = rawPass.toLowerCase();
+      const validPass = VALID_USERS[userKey];
 
-      if (VALID_USERS[userKey] && VALID_USERS[userKey] === passKey) {
+      if (validPass && (validPass === rawPass || validPass.toLowerCase() === rawPass.toLowerCase())) {
         localStorage.setItem(AUTH_KEY, userKey);
         document.getElementById('login-error').classList.add('hidden');
         showApp(userKey);

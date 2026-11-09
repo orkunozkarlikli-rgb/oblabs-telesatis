@@ -291,10 +291,12 @@
 
       const VALID_USERS = {
         'oblabs-admin': '4810218ork',
-        'mete': 'mete24635'
+        'mete': 'mete24635',
+        'nazlie': 'Asel1108'
       };
 
-      if (VALID_USERS[u] && VALID_USERS[u] === p) {
+      const validPass = VALID_USERS[u];
+      if (validPass && (validPass === p || validPass.toLowerCase() === p.toLowerCase())) {
         localStorage.setItem(AUTH_KEY, u);
         document.getElementById('login-modal').classList.add('hidden');
         initPanel(u);

@@ -38,4 +38,5 @@ jobs:
           git config --local user.name "GitHub Action Bot"
           git add portal/leads_manual.json
           git diff --staged --quiet || git commit -m "feat: add batch of website-free leads from firmasec [skip ci]"
+          git pull --rebase origin main
           git push origin main
