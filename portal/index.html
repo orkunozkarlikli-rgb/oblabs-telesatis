@@ -324,9 +324,6 @@
             <span id="modal-phone-text">05XX XXX XX XX</span>
             <span class="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded ml-2">ŞİMDİ ARA</span>
           </a>
-          <div id="modal-test-badge" class="hidden mt-2 text-center text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl py-2">
-            ⚠️ TEST FİRMASI — Numara: 05434992467 — Arama sayımına eklenir
-          </div>
         </div>
 
         <!-- PROMPTER / PITCH -->
@@ -485,24 +482,6 @@
       'oblabs-admin': '4810218ork',
       'mete': 'mete24635',
       'nazlie': 'asel1108'
-    };
-
-    // TEST FİRMASI — her zaman listenin başında göster
-    const TEST_LEAD = {
-      id: 'test_firma_001',
-      name: 'TEST FİRMASI',
-      district: 'Test İlçe',
-      city: 'Test Şehir',
-      category: 'Test Sektör',
-      phone: '05434992467',
-      rating: 5.0,
-      reviews_count: 99,
-      address: 'Test Mahallesi, Test Sokak No:1, Test',
-      website: '',
-      status: 'Aranacak',
-      notes: 'TEST — Bu firma gerçek değil, sistem testi için kullanılır.',
-      maps_url: '#',
-      _isTest: true
     };
 
     // KULLANICI İSTATİSTİKLERİ — localStorage'da her kullanıcı için ayrı tutulur
@@ -697,7 +676,7 @@
     }
 
     // LEAD DATA & REFRESH
-    const STORAGE_KEY = 'oblabs_leads_v8';
+    const STORAGE_KEY = 'oblabs_leads_v9';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -779,10 +758,8 @@
       } catch(e) {}
     }
 
-    function ensureTestLead() {
-      const idx = allLeads.findIndex(l => l.id === TEST_LEAD.id || l.phone === TEST_LEAD.phone);
-      if (idx !== -1) allLeads.splice(idx, 1);
-      allLeads.unshift({ ...TEST_LEAD });
+    function removeTestLead() {
+      allLeads = allLeads.filter(l => l.id !== 'test_firma_001' && l.phone !== '05434992467' && l.name !== 'TEST FİRMASI');
     }
 
     function handleSearchInput() {
@@ -831,7 +808,7 @@
         allLeads.forEach(l => {
           l.category = normalizeSector(l.category, l.name);
         });
-        ensureTestLead();
+        removeTestLead();
         populateDropdowns();
         computeInitialKPIs();
         applyFilters();
@@ -841,7 +818,7 @@
       } else {
         // İlk defa açılıyorsa statik dosyaları çek ve yerel hafızaya kaydet
         await loadInitialStaticPool();
-        ensureTestLead();
+        removeTestLead();
         populateDropdowns();
         computeInitialKPIs();
         applyFilters();
@@ -960,7 +937,7 @@
       });
 
       if (added > 0) {
-        ensureTestLead();
+        removeTestLead();
         computeInitialKPIs();
         applyFilters();
         scheduleLocalCacheSave();
@@ -1235,22 +1212,9 @@
       if (callBtn) callBtn.href = `tel:${cleanPhone}`;
       setEl('modal-phone-text', lead.phone || 'Telefon Yok');
 
-      // Test firması işareti
-      const testBadge = document.getElementById('modal-test-badge');
-      if (testBadge) {
-        if (lead._isTest) {
-          testBadge.classList.remove('hidden');
-          setEl('modal-title', '🧪 TEST FİRMASI');
-        } else {
-          testBadge.classList.add('hidden');
-        }
-      }
-
       const pitchEl = document.getElementById('modal-pitch-text');
       if (pitchEl) {
-        pitchEl.textContent = lead._isTest
-          ? '"TEST — Bu firma gerçek değil. Ara butonuna basarak sistemin telefonu açıp açmadığını test edebilirsiniz. Numara: 05434992467"'
-          : `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
+        pitchEl.textContent = `"Merhaba ${lead.name} yetkilisi ile mi görüşüyorum? ${lead.district}'deki işletmenizi inceledim. ${lead.rating} gibi yüksek bir puanınız ve ${lead.reviews_count} adet gerçek müşteri yorumunuz var, tebrik ederim. Ancak resmi bir web sayfanız ekli değil. 48 saatte yayına hazır mobil uyumlu web sitenizi kısa bir demo ile göstermemi ister misiniz?"`;
       }
 
       const noteInput = document.getElementById('modal-note-input');
@@ -1411,7 +1375,7 @@
       if (btn) btn.disabled = true;
       try {
         await loadInitialStaticPool();
-        ensureTestLead();
+        removeTestLead();
         populateDropdowns();
         computeInitialKPIs();
         applyFilters();
