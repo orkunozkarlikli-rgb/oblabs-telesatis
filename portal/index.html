@@ -676,7 +676,7 @@
     }
 
     // LEAD DATA & REFRESH
-    const STORAGE_KEY = 'oblabs_leads_v10';
+    const STORAGE_KEY = 'oblabs_leads_v11';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -691,7 +691,7 @@
     const SUPABASE_PUB_KEY = 'sb_publishable_7ri4n0dWK7Cxy-KyUHRf8g_CHTsYoNC';
 
     // INDEXEDDB HIZLI YEREL DEPO (Sayfa yenilemelerinde 45MB indirmeyi sıfıra indirir, 0.1 sn açılır)
-    const IDB_NAME = 'OBLabsStorage_v10';
+    const IDB_NAME = 'OBLabsStorage_v11';
     const IDB_STORE = 'leads_cache';
 
     // 16 SADE VE NET ANA SEKTÖR NORMALİZASYONU (920 karmaşık kategoriyi temizler)
@@ -835,11 +835,11 @@
 
       try {
         const responses = await Promise.all([
-          fetch('/leads_manual.json?v=10').catch(() => null),
-          fetch('/leads_manual_w1.json?v=10').catch(() => null),
-          fetch('/leads_manual_w2.json?v=10').catch(() => null),
-          fetch('/leads_part1.json?v=10'),
-          fetch('/leads_part2.json?v=10')
+          fetch('/leads_manual.json?v=11').catch(() => null),
+          fetch('/leads_manual_w1.json?v=11').catch(() => null),
+          fetch('/leads_manual_w2.json?v=11').catch(() => null),
+          fetch('/leads_part1.json?v=11'),
+          fetch('/leads_part2.json?v=11')
         ]);
 
         for (const res of responses) {
