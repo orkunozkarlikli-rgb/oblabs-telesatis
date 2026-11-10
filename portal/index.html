@@ -676,7 +676,7 @@
     }
 
     // LEAD DATA & REFRESH
-    const STORAGE_KEY = 'oblabs_leads_v9';
+    const STORAGE_KEY = 'oblabs_leads_v10';
     const PAGE_SIZE = 12;
 
     let allLeads = [];
@@ -835,9 +835,9 @@
 
       try {
         const responses = await Promise.all([
-          fetch('/leads_manual.json?v=7').catch(() => null),
-          fetch('/leads_manual_w1.json?v=7').catch(() => null),
-          fetch('/leads_manual_w2.json?v=7').catch(() => null),
+          fetch('/leads_manual.json?v=10').catch(() => null),
+          fetch('/leads_manual_w1.json?v=10').catch(() => null),
+          fetch('/leads_manual_w2.json?v=10').catch(() => null),
           fetch('/leads_part1.json?v=7'),
           fetch('/leads_part2.json?v=7')
         ]);
